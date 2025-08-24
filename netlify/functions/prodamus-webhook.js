@@ -4,6 +4,9 @@ const nodemailer = require('nodemailer');
 const { createClient } = require('@supabase/supabase-js');
 
 exports.handler = async (event) => {
+  // Эта строка выведет весь payload в логах
+  console.log('Received payload:', JSON.stringify(payload, null, 2));
+
   if (!event.body) {
     return {
       statusCode: 400,
