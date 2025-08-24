@@ -9,13 +9,16 @@
         body {
             font-family: Arial, sans-serif;
             background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+        .login-container {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            margin: 0;
         }
-        .login-container {
+        .login-box {
             background-color: #fff;
             padding: 30px;
             border-radius: 8px;
@@ -60,83 +63,103 @@
             margin-top: 15px;
             color: red;
         }
-        .content {
+        .user-content {
             display: none;
-            text-align: left;
+            padding: 20px;
+        }
+        .header {
+            background-color: #333;
+            color: #fff;
+            padding: 15px;
+            text-align: center;
+        }
+        .content-area {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .content-area h3 {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
     <div class="login-container" id="loginForm">
-        <h2>Вход в личный кабинет</h2>
-        <div class="input-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" required>
+        <div class="login-box">
+            <h2>Вход в личный кабинет</h2>
+            <div class="input-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="input-group">
+                <label for="password">Пароль</label>
+                <input type="password" id="password" required>
+            </div>
+            <button class="login-button" onclick="login()">Войти</button>
+            <p id="message"></p>
         </div>
-        <div class="input-group">
-            <label for="password">Пароль</label>
-            <input type="password" id="password" required>
-        </div>
-        <button class="login-button" onclick="login()">Войти</button>
-        <p id="message"></p>
     </div>
 
-    <div class="login-container content" id="userContent">
-        <h2 id="userName"></h2>
-        <p>Добро пожаловать в личный кабинет! Ваш доступ к материалам открыт.</p>
-        <p>На этой странице вы сможете разместить любые ссылки на ваши курсы, видео или уроки.</p>
-        <button class="login-button" onclick="logout()">Выйти</button>
+    <div class="user-content" id="userContent">
+        <header class="header">
+            <h1 id="userNameHeader"></h1>
+        </header>
+        <div class="content-area">
+            <h3>Ваши материалы</h3>
+            <p>Добро пожаловать в личный кабинет! Здесь вы найдете все материалы, доступные после оплаты. Вы можете разместить здесь любые ссылки на ваши курсы, видео или уроки.</p>
+            <ul>
+                <li><a href="#">Ссылка на первый урок</a></li>
+                <li><a href="#">Ссылка на второй урок</a></li>
+                <li><a href="#">Ссылка на бонусный материал</a></li>
+            </ul>
+        </div>
+        <div class="content-area">
+            <button class="login-button" onclick="logout()">Выйти</button>
+        </div>
     </div>
 
     <script>
-        // Ваши ключи Supabase
         const supabaseUrl = 'https://jszlcxcwykfguwzwtphc.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpzemxjeGN3eWtmZ3V3end0cGhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwNDg4MzIsImV4cCI6MjA3MTYyNDgzMn0.xQdz0VKktBrx9TRxbrJjP1IRy6H1v8sYGIuotAVO0QI';
-
-        // ИСПРАВЛЕНИЕ: Это единственная строка, которая была неправильной.
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         async function login() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const messageElement = document.getElementById('message');
-
             if (!email || !password) {
                 messageElement.textContent = 'Пожалуйста, заполните все поля.';
                 return;
             }
-
             messageElement.textContent = 'Подождите...';
-
-            // Запрос к базе данных для поиска пользователя
             const { data, error } = await supabase
                 .from('users')
                 .select('*')
                 .eq('email', email)
                 .eq('password', password)
                 .limit(1);
-
             if (error) {
                 console.error('Ошибка при запросе:', error);
                 messageElement.textContent = 'Произошла ошибка. Пожалуйста, попробуйте позже.';
                 return;
             }
-
             if (data && data.length > 0) {
-                // Пользователь найден, вход успешен
                 const user = data[0];
                 document.getElementById('loginForm').style.display = 'none';
                 document.getElementById('userContent').style.display = 'block';
-                document.getElementById('userName').textContent = `Привет, ${user.name}!`;
+                document.getElementById('userNameHeader').textContent = `Привет, ${user.name}!`;
                 messageElement.textContent = '';
             } else {
-                // Пользователь не найден, неверный email или пароль
                 messageElement.textContent = 'Неверный email или пароль.';
             }
         }
-
         function logout() {
-            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('loginForm').style.display = 'flex';
             document.getElementById('userContent').style.display = 'none';
         }
     </script>
