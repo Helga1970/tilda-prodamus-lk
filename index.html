@@ -93,8 +93,8 @@
         const supabaseUrl = 'https://jszlcxcwykfguwzwtphc.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpzemxjeGN3eWtmZ3V3end0cGhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwNDg4MzIsImV4cCI6MjA3MTYyNDgzMn0.xQdz0VKktBrx9TRxbrJjP1IRy6H1v8sYGIuotAVO0QI';
 
-        // ИСПРАВЛЕНИЕ: Правильная инициализация клиента Supabase
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        // ИСПРАВЛЕНО
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         async function login() {
             const email = document.getElementById('email').value;
