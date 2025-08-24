@@ -21,7 +21,8 @@ exports.handler = async (event) => {
   }
 
   const customerEmail = payload.customer_email;
-  const customerName = payload.order_num || 'Клиент';
+  // Более надежная проверка: если имя пустое или null, ставим 'Клиент'
+  const customerName = payload.order_num ? payload.order_num : 'Клиент';
 
   if (!customerEmail) {
     return {
@@ -47,20 +48,17 @@ exports.handler = async (event) => {
   const accessEndDate = new Date();
   accessEndDate.setDate(accessEndDate.getDate() + accessDays);
 
-  // -------------------------------------------------------------
-  // ПОДКЛЮЧЕНИЕ К SUPABASE
-  // -------------------------------------------------------------
   const supabaseUrl = 'https://jszlcxcwykfguwzwtphc.supabase.co';
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpzemxjeGN3eWtmZ3V3end0cGhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwNDg4MzIsImV4cCI6MjA3MTYyNDgzMn0.xQdz0VKktBrx9TRxbrJjP1IRy6H1v8sYGIuotAVO0QI';
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  // Сохранение данных в базу
   const { data, error } = await supabase
     .from('users')
     .insert([{ 
       email: customerEmail, 
       password: password, 
+      name: customerName,
       access_end_date: accessEndDate.toISOString() 
     }]);
 
@@ -72,7 +70,6 @@ exports.handler = async (event) => {
     };
   }
 
-  // Отправка письма
   const transporter = nodemailer.createTransport({
     host: 'in-v3.mailjet.com',
     port: 587,
