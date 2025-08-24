@@ -9,6 +9,6 @@
   "dependencies": {
     "nodemailer": "^6.9.14",
     "netlify-lambda": "^2.0.16",
-    "@types/node": "^20.14.9"
+    "@supabase/supabase-js": "^2.45.0"
   }
 }
