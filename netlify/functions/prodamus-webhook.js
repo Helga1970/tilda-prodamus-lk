@@ -1,7 +1,7 @@
-// netlify/functions/prodamus-webhook.js
 const { URLSearchParams } = require('url');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const { createClient } = require('@supabase/supabase-js');
 
 exports.handler = async (event) => {
   if (!event.body) {
@@ -32,7 +32,6 @@ exports.handler = async (event) => {
 
   let accessDays;
   const paymentSum = parseFloat(payload.sum);
-
   if (paymentSum === 350.00) {
     accessDays = 30;
   } else if (paymentSum === 3000.00) {
@@ -45,10 +44,35 @@ exports.handler = async (event) => {
   }
 
   const password = crypto.randomBytes(4).toString('hex');
-  
+  const accessEndDate = new Date();
+  accessEndDate.setDate(accessEndDate.getDate() + accessDays);
+
   // -------------------------------------------------------------
-  // НАСТРОЙКИ ДЛЯ MAILJET
+  // ПОДКЛЮЧЕНИЕ К SUPABASE
   // -------------------------------------------------------------
+  const supabaseUrl = 'https://jszlcxcwykfguwzwtphc.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpzemxjeGN3eWtmZ3V3end0cGhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwNDg4MzIsImV4cCI6MjA3MTYyNDgzMn0.xQdz0VKktBrx9TRxbrJjP1IRy6H1v8sYGIuotAVO0QI';
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  // Сохранение данных в базу
+  const { data, error } = await supabase
+    .from('users')
+    .insert([{ 
+      email: customerEmail, 
+      password: password, 
+      access_end_date: accessEndDate.toISOString() 
+    }]);
+
+  if (error) {
+    console.error('Ошибка при записи в базу данных:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ message: "Database write error." }),
+    };
+  }
+
+  // Отправка письма
   const transporter = nodemailer.createTransport({
     host: 'in-v3.mailjet.com',
     port: 587,
@@ -78,13 +102,12 @@ exports.handler = async (event) => {
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log('Письмо успешно отправлено клиенту.');
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: "Email sent successfully." }),
+      body: JSON.stringify({ message: "Email and database updated successfully." }),
     };
-  } catch (error) {
-    console.error('Ошибка при отправке письма:', error);
+  } catch (emailError) {
+    console.error('Ошибка при отправке письма:', emailError);
     return {
       statusCode: 500,
       body: JSON.stringify({ message: "Error sending email." }),
