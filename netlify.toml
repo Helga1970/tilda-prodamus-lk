@@ -1,5 +1,5 @@
 [build]
-  command = "cd netlify/functions && npm install"
+  command = "npm install"        # Устанавливаем все зависимости из корня
   functions = "netlify/functions"
   publish = "."
 
