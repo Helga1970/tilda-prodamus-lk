@@ -5,6 +5,7 @@ const { Client } = require('pg');
 
 // Функция для обработки вебхука Prodamus
 const handleProdamusWebhook = async (client, payload) => {
+    // ... (логика вебхука, которую мы уже настроили)
     if (payload.payment_status !== 'success') {
         return {
             statusCode: 200,
@@ -56,29 +57,29 @@ const handleProdamusWebhook = async (client, payload) => {
         const insertValues = [customerEmail, password, customerName, subscriptionType, accessEndDate.toISOString()];
         await client.query(insertQuery, insertValues);
         const transporter = nodemailer.createTransport({
-          host: 'in-v3.mailjet.com',
-          port: 587,
-          secure: false,
-          auth: {
-            user: '51db8ea3183fdd19e18f7cb18e52c32d',
-            pass: '98289e767513278bd19fc129544da3b6'
-          }
+            host: 'in-v3.mailjet.com',
+            port: 587,
+            secure: false,
+            auth: {
+                user: '51db8ea3183fdd19e18f7cb18e52c32d',
+                pass: '98289e767513278bd19fc129544da3b6'
+            }
         });
         const mailOptions = {
-          from: 'pro.culinaria.ru@gmail.com',
-          to: customerEmail,
-          subject: 'Доступ к Личному кабинету',
-          html: `
+            from: 'pro.culinaria.ru@gmail.com',
+            to: customerEmail,
+            subject: 'Доступ к Личному кабинету',
+            html: `
             <h2>Здравствуйте, ${customerName}!</h2>
             <p>Благодарим за оплату. Ваш доступ к материалам открыт на **${accessDays}** дней.</p>
             <p>Ваши данные для входа в Личный кабинет:</p>
             <ul>
-              <li>**Email:** ${customerEmail}</li>
-              <li>**Пароль:** ${password}</li>
+                <li>**Email:** ${customerEmail}</li>
+                <li>**Пароль:** ${password}</li>
             </ul>
             <p>Войдите в свой Личный кабинет, чтобы получить доступ к материалам.</p>
             <p>Ссылка на ЛК: https://tilda-prodamus-lk.netlify.app</p>
-          `,
+            `,
         };
         await transporter.sendMail(mailOptions);
     }
@@ -90,44 +91,62 @@ const handleProdamusWebhook = async (client, payload) => {
 
 // Главная функция-обработчик
 exports.handler = async (event) => {
+    // Логируем все входящие данные для отладки
+    console.log('Incoming request event:', JSON.stringify(event, null, 2));
+
     const client = new Client({
         connectionString: process.env.NEON_DB_URL,
     });
     try {
         await client.connect();
-        // Определяем тип запроса по Content-Type
+        let requestBody;
+        // Проверяем, пришел ли запрос от Prodamus (использует Content-Type: application/x-www-form-urlencoded)
         if (event.headers['content-type'] && event.headers['content-type'].includes('application/x-www-form-urlencoded')) {
-            // Это вебхук от Prodamus
             const params = new URLSearchParams(event.body);
-            const payload = Object.fromEntries(params.entries());
-            return await handleProdamusWebhook(client, payload);
-        } else {
-            // Это запрос на авторизацию
-            // Мы пытаемся разобрать тело как JSON, на случай, если форма отправляет так
-            const { email, password } = JSON.parse(event.body);
-            const query = 'SELECT * FROM users WHERE email = $1 AND password = $2';
-            const values = [email, password];
-            const res = await client.query(query, values);
-            if (res.rows.length > 0) {
-                return {
-                    statusCode: 200,
-                    body: JSON.stringify({
-                        message: "Успешная авторизация",
-                        user: res.rows[0],
-                    }),
-                };
-            } else {
-                return {
-                    statusCode: 401,
-                    body: JSON.stringify({
-                        message: "Неверный email или пароль",
-                    }),
-                };
+            requestBody = Object.fromEntries(params.entries());
+            if (requestBody.payment_status) {
+                return await handleProdamusWebhook(client, requestBody);
             }
         }
+        // Если это не вебхук, пытаемся разобрать тело как JSON
+        try {
+            requestBody = JSON.parse(event.body);
+        } catch (e) {
+            // Если JSON не работает, пытаемся разобрать как форму
+            const params = new URLSearchParams(event.body);
+            requestBody = Object.fromEntries(params.entries());
+        }
+
+        const { email, password } = requestBody;
+
+        if (!email || !password) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({ message: "Отсутствуют email или пароль." }),
+            };
+        }
+
+        const query = 'SELECT * FROM users WHERE email = $1 AND password = $2';
+        const values = [email, password];
+        const res = await client.query(query, values);
+        if (res.rows.length > 0) {
+            return {
+                statusCode: 200,
+                body: JSON.stringify({
+                    message: "Успешная авторизация",
+                    user: res.rows[0],
+                }),
+            };
+        } else {
+            return {
+                statusCode: 401,
+                body: JSON.stringify({
+                    message: "Неверный email или пароль",
+                }),
+            };
+        }
     } catch (err) {
-        // Логируем ошибку для отладки
-        console.error('Ошибка в обработчике:', err.message, 'Event body:', event.body);
+        console.error('Ошибка в обработчике:', err.message);
         return {
             statusCode: 500,
             body: JSON.stringify({
