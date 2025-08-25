@@ -3,9 +3,7 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const { Client } = require('pg');
 
-// Функция для обработки вебхука Prodamus
 const handleProdamusWebhook = async (client, payload) => {
-    // ... (логика вебхука, которую мы уже настроили)
     if (payload.payment_status !== 'success') {
         return {
             statusCode: 200,
@@ -78,7 +76,7 @@ const handleProdamusWebhook = async (client, payload) => {
                 <li>**Пароль:** ${password}</li>
             </ul>
             <p>Войдите в свой Личный кабинет, чтобы получить доступ к материалам.</p>
-            <p>Ссылка на ЛК: https://tilda-prodamus-lk.netlify.app</p>
+            <p>Ссылка на ЛК: http://library.pro-culinaria.ru</p>
             `,
         };
         await transporter.sendMail(mailOptions);
@@ -89,9 +87,7 @@ const handleProdamusWebhook = async (client, payload) => {
     };
 };
 
-// Главная функция-обработчик
 exports.handler = async (event) => {
-    // Логируем все входящие данные для отладки
     console.log('Incoming request event:', JSON.stringify(event, null, 2));
 
     const client = new Client({
@@ -100,7 +96,6 @@ exports.handler = async (event) => {
     try {
         await client.connect();
         let requestBody;
-        // Проверяем, пришел ли запрос от Prodamus (использует Content-Type: application/x-www-form-urlencoded)
         if (event.headers['content-type'] && event.headers['content-type'].includes('application/x-www-form-urlencoded')) {
             const params = new URLSearchParams(event.body);
             requestBody = Object.fromEntries(params.entries());
@@ -108,11 +103,9 @@ exports.handler = async (event) => {
                 return await handleProdamusWebhook(client, requestBody);
             }
         }
-        // Если это не вебхук, пытаемся разобрать тело как JSON
         try {
             requestBody = JSON.parse(event.body);
         } catch (e) {
-            // Если JSON не работает, пытаемся разобрать как форму
             const params = new URLSearchParams(event.body);
             requestBody = Object.fromEntries(params.entries());
         }
