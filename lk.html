@@ -17,15 +17,20 @@
     </div>
 
     <script>
-        // Эта функция будет загружать контент. Мы передаём в неё email
-        const loadContent = async (email, pageName) => {
+        const loadContent = async (pageName) => {
             const contentDiv = document.getElementById('content');
             contentDiv.innerHTML = '<p>Загружаем контент...</p>';
+            
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user || !user.email) {
+                window.location.href = 'index.html';
+                return;
+            }
 
             try {
                 const response = await fetch(`/api/get-content?page=${pageName}`, { 
                     headers: {
-                        'X-User-Email': email
+                        'X-User-Email': user.email
                     }
                 });
 
@@ -42,14 +47,12 @@
             }
         };
 
-        // Эта функция будет доступна глобально для кнопок меню
         window.loadContent = loadContent;
 
         document.addEventListener('DOMContentLoaded', () => {
             const logoutButton = document.getElementById('logoutButton');
             const user = JSON.parse(localStorage.getItem('user'));
             
-            // Если пользователь не найден в localStorage, перенаправляем на страницу входа
             if (!user || !user.email) {
                 window.location.href = 'index.html';
                 return;
@@ -60,8 +63,7 @@
                 window.location.href = 'index.html';
             });
 
-            // Загружаем меню сразу после загрузки страницы
-            loadContent(user.email, 'menu');
+            loadContent('menu');
         });
     </script>
 </body>
