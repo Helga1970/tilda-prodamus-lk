@@ -1,6 +1,4 @@
-const axios = require('axios');
 const { Client } = require('pg');
-const cheerio = require('cheerio');
 
 const checkSubscription = async (email) => {
     const client = new Client({
@@ -10,16 +8,14 @@ const checkSubscription = async (email) => {
         await client.connect();
         const query = 'SELECT access_end_date FROM users WHERE email = $1';
         const result = await client.query(query, [email]);
-        if (result.rows.length === 0) {
-            return false;
-        }
-        
+        if (result.rows.length === 0) return false;
+
         const endDateMs = new Date(result.rows[0].access_end_date).getTime();
         const nowMs = new Date().getTime();
-        
+
         return endDateMs >= nowMs;
     } catch (error) {
-        console.error('Критическая ошибка при проверке подписки:', error);
+        console.error('Ошибка при проверке подписки:', error);
         return false;
     } finally {
         await client.end();
@@ -31,19 +27,13 @@ exports.handler = async (event) => {
     const page = event.queryStringParameters.page || 'menu';
 
     if (!userEmail) {
-        return {
-            statusCode: 401,
-            body: 'Не авторизован.'
-        };
+        return { statusCode: 401, body: 'Не авторизован.' };
     }
 
     const hasAccess = await checkSubscription(userEmail);
 
     if (!hasAccess) {
-        return {
-            statusCode: 403,
-            body: 'Доступ запрещён. Ваша подписка истекла.'
-        };
+        return { statusCode: 403, body: 'Доступ запрещён. Ваша подписка истекла.' };
     }
 
     const pages = {
@@ -59,43 +49,19 @@ exports.handler = async (event) => {
                 <li><a href="#" onclick="loadContent('new-book'); return false;">Новая книга</a></li>
             </ul>
         `;
-        return {
-            statusCode: 200,
-            headers: { 'Content-Type': 'text/html' },
-            body: menuHtml
-        };
+        return { statusCode: 200, headers: { 'Content-Type': 'text/html' }, body: menuHtml };
     }
 
     const pageUrl = pages[page];
 
     if (!pageUrl) {
-        return {
-            statusCode: 404,
-            body: 'Страница не найдена.'
-        };
+        return { statusCode: 404, body: 'Страница не найдена.' };
     }
 
-    try {
-        const response = await axios.get(pageUrl, {
-            headers: {
-                'Referer': 'https://pro-culinaria.ru/'
-            }
-        });
-
-        // **Критическое исправление:** Используем cheerio для надежного извлечения контента
-        const $ = cheerio.load(response.data);
-        const cleanContent = $('body').html();
-        
-        return {
-            statusCode: 200,
-            headers: { 'Content-Type': 'text/html' },
-            body: cleanContent
-        };
-    } catch (error) {
-        console.error('Ошибка при проксировании контента:', error);
-        return {
-            statusCode: 500,
-            body: 'Ошибка при загрузке контента.'
-        };
-    }
+    // **Новый подход для iframe:** возвращаем URL, а не HTML
+    return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: pageUrl })
+    };
 };
