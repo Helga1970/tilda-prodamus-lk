@@ -1,77 +1,24 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Личный кабинет</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; }
-        iframe { width: 100%; height: 1000px; border: 0; }
-        #menu ul { list-style: none; padding: 0; }
-        #menu li { margin-bottom: 10px; }
-        #menu a { text-decoration: none; color: #007BFF; cursor: pointer; }
-        #menu a:hover { text-decoration: underline; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>Добро пожаловать в Личный кабинет!</h1>
-        <button id="logoutButton">Выйти</button>
-    </div>
+<a href="#" onclick="goToPage('chitalnyizal'); return false;">Читальный зал</a>
 
-    <div id="menu">
-        <ul>
-            <li><a onclick="loadContent('chitalnyizal');">Читальный зал</a></li>
-            <li><a onclick="loadContent('new-book');">Новая книга</a> (пока пусто)</li>
-        </ul>
-    </div>
+<script>
+const user = JSON.parse(localStorage.getItem('user'));
 
-    <div id="content">
-        <p>Загружаем контент...</p>
-    </div>
-
-    <script>
-        const contentDiv = document.getElementById('content');
-        const logoutButton = document.getElementById('logoutButton');
-        const user = JSON.parse(localStorage.getItem('user'));
-
-        if (!user || !user.email) {
-            window.location.href = 'index.html';
-        }
-
-        const loadContent = async (pageName) => {
-            contentDiv.innerHTML = '<p>Загружаем контент...</p>';
-            try {
-                const response = await fetch(`/api/get-content?page=${pageName}`, { 
-                    headers: { 'X-User-Email': user.email }
-                });
-
-                if (!response.ok) {
-                    contentDiv.innerHTML = `<p style="color:red;">${await response.text()}</p>`;
-                    return;
-                }
-
-                const data = await response.json(); // JSON с url
-                contentDiv.innerHTML = '';
-                const iframe = document.createElement('iframe');
-                iframe.src = data.url;
-                iframe.style.width = '100%';
-                iframe.style.height = '1000px';
-                iframe.frameBorder = 0;
-                contentDiv.appendChild(iframe);
-
-            } catch (error) {
-                console.error(error);
-                contentDiv.innerHTML = '<p style="color:red;">Ошибка при загрузке контента.</p>';
-            }
-        };
-
-        logoutButton.addEventListener('click', () => {
-            localStorage.removeItem('user');
-            window.location.href = 'index.html';
+const goToPage = async (pageName) => {
+    try {
+        const response = await fetch(`/api/get-content?page=${pageName}`, {
+            headers: { 'X-User-Email': user.email }
         });
 
-        // сразу грузим рабочую ссылку
-        loadContent('chitalnyizal');
-    </script>
-</body>
-</html>
+        if (!response.ok) {
+            alert(await response.text());
+            return;
+        }
+
+        const data = await response.json();
+        // data.url — это реальный URL Tilda
+        window.location.href = `/redirect?token=${encodeURIComponent(data.token)}`;
+    } catch (e) {
+        alert('Ошибка перехода на страницу.');
+    }
+};
+</script>
