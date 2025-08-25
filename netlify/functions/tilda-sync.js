@@ -5,7 +5,7 @@ const axios = require('axios');
 exports.handler = async (event) => {
     const { pageid, publickey } = event.queryStringParameters;
     
-    // Твои ключи, захардкоженные прямо в код
+    // Твои реальные ключи
     const tildaPublicKey = "gpesp7k6wvdz3iced0lu";
     const tildaSecretKey = "3db1e83f29703b9778db";
 
@@ -36,7 +36,7 @@ exports.handler = async (event) => {
 
         const pageHtml = apiResponse.data.result.html;
         const pageFileName = 'lk-content.html';
-        const filePath = path.join(__dirname, '..', pageFileName);
+        const filePath = path.join(process.cwd(), '..', pageFileName);
 
         await fs.writeFile(filePath, pageHtml);
 
