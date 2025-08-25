@@ -25,11 +25,6 @@ const checkSubscription = async (email) => {
     }
 };
 
-const extractBodyContent = (html) => {
-    const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-    return bodyMatch && bodyMatch[1] ? bodyMatch[1] : html;
-};
-
 exports.handler = async (event) => {
     const userEmail = event.headers['x-user-email'];
     const page = event.queryStringParameters.page || 'menu';
@@ -79,25 +74,9 @@ exports.handler = async (event) => {
         };
     }
 
-    try {
-        const response = await axios.get(pageUrl, {
-            headers: {
-                'Referer': 'https://pro-culinaria.ru/'
-            }
-        });
-
-        const cleanContent = extractBodyContent(response.data);
-        
-        return {
-            statusCode: 200,
-            headers: { 'Content-Type': 'text/html' },
-            body: cleanContent
-        };
-    } catch (error) {
-        console.error('Ошибка при проксировании контента:', error);
-        return {
-            statusCode: 500,
-            body: 'Ошибка при загрузке контента.'
-        };
-    }
+    // **Критическое исправление:** Возвращаем URL-адрес, а не HTML-код.
+    return {
+        statusCode: 200,
+        body: pageUrl
+    };
 };
