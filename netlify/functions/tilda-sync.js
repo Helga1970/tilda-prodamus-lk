@@ -4,10 +4,10 @@ const axios = require('axios');
 
 exports.handler = async (event) => {
     const { pageid, publickey } = event.queryStringParameters;
-    
-    // Твои реальные ключи
-    const tildaPublicKey = "gpesp7k6wvdz3iced0lu";
-    const tildaSecretKey = "3db1e83f29703b9778db";
+
+    // Ключи берутся из переменных окружения
+    const tildaPublicKey = process.env.TILDA_PUBLIC_KEY;
+    const tildaSecretKey = process.env.TILDA_SECRET_KEY;
 
     if (!publickey || publickey !== tildaPublicKey) {
         return {
@@ -36,7 +36,7 @@ exports.handler = async (event) => {
 
         const pageHtml = apiResponse.data.result.html;
         const pageFileName = 'lk-content.html';
-        const filePath = path.join(process.cwd(), '..', pageFileName);
+        const filePath = path.join('/tmp', pageFileName);
 
         await fs.writeFile(filePath, pageHtml);
 
