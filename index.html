@@ -1,158 +1,72 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Личный кабинет</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            margin: 0;
-            padding: 0;
+// netlify/functions/get-content.js
+const axios = require('axios');
+const { Client } = require('pg');
+
+// Функция для проверки подписки
+const checkSubscription = async (email) => {
+    const client = new Client({
+        connectionString: process.env.NEON_DB_URL,
+    });
+    try {
+        await client.connect();
+        const query = 'SELECT access_end_date FROM users WHERE email = $1';
+        const result = await client.query(query, [email]);
+        if (result.rows.length === 0) {
+            return false;
         }
-        .login-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .login-box {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 350px;
-        }
-        h2 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-        .input-group {
-            margin-bottom: 15px;
-            text-align: left;
-        }
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #555;
-        }
-        .input-group input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        .login-button {
-            width: 100%;
-            padding: 12px;
-            background-color: #007BFF;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .login-button:hover {
-            background-color: #0056b3;
-        }
-        #message {
-            margin-top: 15px;
-            color: red;
-        }
-        .user-content {
-            display: none;
-            padding: 20px;
-        }
-        .header {
-            background-color: #333;
-            color: #fff;
-            padding: 15px;
-            text-align: center;
-        }
-        .content-area {
-            max-width: 900px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        .content-area h3 {
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-    </style>
-</head>
-<body>
-    <div class="login-container" id="loginForm">
-        <div class="login-box">
-            <h2>Вход в личный кабинет</h2>
-            <div class="input-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" required>
-            </div>
-            <div class="input-group">
-                <label for="password">Пароль</label>
-                <input type="password" id="password" required>
-            </div>
-            <button class="login-button" onclick="login()">Войти</button>
-            <p id="message"></p>
-        </div>
-    </div>
-    <div class="user-content" id="userContent">
-        <header class="header">
-            <h1 id="userNameHeader"></h1>
-        </header>
-        <div id="tildaContent"></div>
-        <div class="content-area">
-            <button class="login-button" onclick="logout()">Выйти</button>
-        </div>
-    </div>
-    <script>
-        async function login() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const messageElement = document.getElementById('message');
-            if (!email || !password) {
-                messageElement.textContent = 'Пожалуйста, заполните все поля.';
-                return;
+        const endDate = new Date(result.rows[0].access_end_date);
+        const now = new Date();
+        return endDate > now;
+    } catch (error) {
+        console.error('Ошибка при проверке подписки:', error);
+        return false;
+    } finally {
+        await client.end();
+    }
+};
+
+exports.handler = async (event) => {
+    // Получаем email пользователя из заголовков или куки.
+    // Пока что у вас нет токена, мы будем передавать email через специальный заголовок.
+    // В идеале, здесь должен быть JWT-токен.
+    const userEmail = event.headers['x-user-email'];
+
+    if (!userEmail) {
+        return {
+            statusCode: 401,
+            body: 'Не авторизован.'
+        };
+    }
+
+    const hasAccess = await checkSubscription(userEmail);
+
+    if (!hasAccess) {
+        return {
+            statusCode: 403,
+            body: 'Доступ запрещён. Ваша подписка истекла.'
+        };
+    }
+
+    // Если доступ есть, проксируем контент с Tilda
+    try {
+        const tildaPageUrl = 'https://pro-culinaria.ru/chitalnyizal';
+        const response = await axios.get(tildaPageUrl, {
+            headers: {
+                'Referer': 'https://pro-culinaria.ru/'
             }
-            messageElement.textContent = 'Проверяем...';
-            try {
-                const response = await fetch('/.netlify/functions/prodamus-webhook', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ email: email, password: password })
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    document.getElementById('loginForm').style.display = 'none';
-                    document.getElementById('userContent').style.display = 'block';
-                    document.getElementById('userNameHeader').textContent = `Привет, ${data.user.name}!`;
-                    messageElement.textContent = '';
-                    // Загружаем контент из файла lk-content.html
-                    const contentResponse = await fetch('/lk-content.html');
-                    const contentHtml = await contentResponse.text();
-                    document.getElementById('tildaContent').innerHTML = contentHtml;
-                } else {
-                    messageElement.textContent = data.message;
-                }
-            } catch (error) {
-                console.error('Ошибка при запросе:', error);
-                messageElement.textContent = 'Произошла ошибка. Пожалуйста, попробуйте позже.';
-            }
-        }
-        function logout() {
-            document.getElementById('loginForm').style.display = 'flex';
-            document.getElementById('userContent').style.display = 'none';
-            document.getElementById('tildaContent').innerHTML = ''; // Очищаем контент при выходе
-        }
-    </script>
-</body>
-</html>
+        });
+        
+        // Передаем содержимое страницы обратно
+        return {
+            statusCode: 200,
+            headers: { 'Content-Type': 'text/html' },
+            body: response.data
+        };
+    } catch (error) {
+        console.error('Ошибка при проксировании контента:', error);
+        return {
+            statusCode: 500,
+            body: 'Ошибка при загрузке контента.'
+        };
+    }
+};
