@@ -62,34 +62,11 @@
             margin-top: 15px;
             color: red;
         }
-        .user-content {
-            display: none;
-            padding: 20px;
-        }
-        .header {
-            background-color: #333;
-            color: #fff;
-            padding: 15px;
-            text-align: center;
-        }
-        .content-area {
-            max-width: 900px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        .content-area h3 {
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
     </style>
 </head>
 <body>
-    <div class="login-container" id="loginForm">
-        <div class="login-box">
+    <div class="login-container">
+        <form id="loginForm" class="login-box">
             <h2>Вход в личный кабинет</h2>
             <div class="input-group">
                 <label for="email">Email</label>
@@ -99,59 +76,45 @@
                 <label for="password">Пароль</label>
                 <input type="password" id="password" required>
             </div>
-            <button class="login-button" onclick="login()">Войти</button>
+            <button type="submit" class="login-button">Войти</button>
             <p id="message"></p>
-        </div>
+        </form>
     </div>
-    <div class="user-content" id="userContent">
-        <header class="header">
-            <h1 id="userNameHeader"></h1>
-        </header>
-        <div id="tildaContent"></div>
-        <div class="content-area">
-            <button class="login-button" onclick="logout()">Выйти</button>
-        </div>
-    </div>
+
     <script>
-        async function login() {
+        const loginForm = document.getElementById('loginForm');
+        loginForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const messageElement = document.getElementById('message');
-            if (!email || !password) {
-                messageElement.textContent = 'Пожалуйста, заполните все поля.';
-                return;
-            }
-            messageElement.textContent = 'Проверяем...';
+
+            const loginUrl = '/api/prodamus-webhook';
+
             try {
-                const response = await fetch('/api/prodamus-webhook', {
+                const response = await fetch(loginUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ email: email, password: password })
+                    body: JSON.stringify({ email, password }),
                 });
+
                 const data = await response.json();
+
                 if (response.ok) {
-                    document.getElementById('loginForm').style.display = 'none';
-                    document.getElementById('userContent').style.display = 'block';
-                    document.getElementById('userNameHeader').textContent = `Привет, ${data.user.name}!`;
-                    messageElement.textContent = '';
-                    const contentResponse = await fetch('/api/get-content');
-                    const contentHtml = await contentResponse.text();
-                    document.getElementById('tildaContent').innerHTML = contentHtml;
+                    // **Критическое исправление:** Убеждаемся, что данные сохранены,
+                    // прежде чем перейти на другую страницу.
+                    localStorage.setItem('user', JSON.stringify(data.user)); 
+                    window.location.href = 'lk.html';
                 } else {
-                    messageElement.textContent = data.message;
+                    messageElement.textContent = data.message || 'Неверный email или пароль';
                 }
             } catch (error) {
-                console.error('Ошибка при запросе:', error);
-                messageElement.textContent = 'Произошла ошибка. Пожалуйста, попробуйте позже.';
+                console.error('Ошибка при авторизации:', error);
+                messageElement.textContent = 'Произошла ошибка при попытке входа. Пожалуйста, попробуйте позже.';
             }
-        }
-        function logout() {
-            document.getElementById('loginForm').style.display = 'flex';
-            document.getElementById('userContent').style.display = 'none';
-            document.getElementById('tildaContent').innerHTML = '';
-        }
+        });
     </script>
 </body>
 </html>
