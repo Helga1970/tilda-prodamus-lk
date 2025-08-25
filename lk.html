@@ -5,6 +5,7 @@
     <style>
         body { font-family: sans-serif; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; }
+        iframe { width: 100%; height: 1000px; border: 0; }
     </style>
 </head>
 <body>
@@ -14,6 +15,7 @@
     </div>
 
     <div id="content">
+        <p>Выберите материал из меню.</p>
     </div>
 
     <script>
@@ -29,14 +31,15 @@
             contentDiv.innerHTML = '<p>Загружаем контент...</p>';
             try {
                 const response = await fetch(`/api/get-content?page=${pageName}`, { 
-                    headers: {
-                        'X-User-Email': user.email
-                    }
+                    headers: { 'X-User-Email': user.email }
                 });
 
                 if (response.ok) {
-                    const contentHtml = await response.text();
-                    contentDiv.innerHTML = contentHtml;
+                    const data = await response.json();
+                    contentDiv.innerHTML = '';
+                    const iframe = document.createElement('iframe');
+                    iframe.src = data.url;
+                    contentDiv.appendChild(iframe);
                 } else {
                     const errorText = await response.text();
                     contentDiv.innerHTML = `<p style="color:red;">${errorText}</p>`;
@@ -52,6 +55,7 @@
             window.location.href = 'index.html';
         });
 
+        // Показываем меню по умолчанию
         loadContent('menu');
     </script>
 </body>
