@@ -76,7 +76,7 @@ const handleProdamusWebhook = async (client, payload) => {
                 <li>**Пароль:** ${password}</li>
             </ul>
             <p>Войдите в свой Личный кабинет, чтобы получить доступ к материалам.</p>
-            <p>Ссылка на ЛК: http://library.pro-culinaria.ru</p>
+            <p>Ссылка на ЛК: https://pro-culinaria-lk.proculinaria-book.ru</p>
             `,
         };
         await transporter.sendMail(mailOptions);
