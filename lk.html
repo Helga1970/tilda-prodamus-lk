@@ -49,10 +49,8 @@
             const logoutButton = document.getElementById('logoutButton');
             const user = JSON.parse(localStorage.getItem('user'));
             
-            console.log('Данные пользователя из localStorage:', user); // Проверяем, что здесь есть email
-
+            // Если пользователь не найден в localStorage, перенаправляем на страницу входа
             if (!user || !user.email) {
-                console.error('Пользователь не найден в localStorage. Перенаправляем на страницу входа.');
                 window.location.href = 'index.html';
                 return;
             }
