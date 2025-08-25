@@ -5,10 +5,9 @@
     <style>
         body { font-family: sans-serif; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; }
-        /* Стиль для iframe, чтобы он занимал всю доступную область */
         iframe {
             width: 100%;
-            height: calc(100vh - 150px); /* Вычисляем высоту, чтобы он не выходил за пределы экрана */
+            height: calc(100vh - 150px);
             border: none;
         }
     </style>
@@ -42,6 +41,7 @@
 
                 if (response.ok) {
                     const pageUrl = await response.text();
+                    // **Критическое исправление:** Вставляем iframe с полученным URL-адресом
                     contentDiv.innerHTML = `<iframe src="${pageUrl}"></iframe>`;
                 } else {
                     const errorText = await response.text();
