@@ -107,15 +107,7 @@
         <header class="header">
             <h1 id="userNameHeader"></h1>
         </header>
-        <div class="content-area">
-            <h3>Ваши материалы</h3>
-            <p>Добро пожаловать в личный кабинет! Здесь вы найдете все материалы, доступные после оплаты. Вы можете разместить здесь любые ссылки на ваши курсы, видео или уроки.</p>
-            <ul>
-                <li><a href="#">Ссылка на первый урок</a></li>
-                <li><a href="#">Ссылка на второй урок</a></li>
-                <li><a href="#">Ссылка на бонусный материал</a></li>
-            </ul>
-        </div>
+        <div id="tildaContent"></div>
         <div class="content-area">
             <button class="login-button" onclick="logout()">Выйти</button>
         </div>
@@ -144,6 +136,10 @@
                     document.getElementById('userContent').style.display = 'block';
                     document.getElementById('userNameHeader').textContent = `Привет, ${data.user.name}!`;
                     messageElement.textContent = '';
+                    // Загружаем контент из файла lk-content.html
+                    const contentResponse = await fetch('/lk-content.html');
+                    const contentHtml = await contentResponse.text();
+                    document.getElementById('tildaContent').innerHTML = contentHtml;
                 } else {
                     messageElement.textContent = data.message;
                 }
@@ -155,6 +151,7 @@
         function logout() {
             document.getElementById('loginForm').style.display = 'flex';
             document.getElementById('userContent').style.display = 'none';
+            document.getElementById('tildaContent').innerHTML = ''; // Очищаем контент при выходе
         }
     </script>
 </body>
