@@ -15,8 +15,8 @@ const goToPage = async (pageName) => {
         }
 
         const data = await response.json();
-        // data.url — это реальный URL Tilda
-        window.location.href = `/redirect?token=${encodeURIComponent(data.token)}`;
+        // Переход на функцию redirect через /api
+        window.location.href = `/api/redirect?token=${encodeURIComponent(data.token)}`;
     } catch (e) {
         alert('Ошибка перехода на страницу.');
     }
