@@ -1,5 +1,7 @@
-[functions]
-  directory = "netlify/functions"
+[build]
+  command = "cd netlify/functions && npm install"
+  functions = "netlify/functions"
+  publish = "."
 
 [[redirects]]
   from = "/api/*"
