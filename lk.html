@@ -35,7 +35,6 @@
             const loadProtectedContent = async (email) => {
                 contentDiv.innerHTML = '<p>Проверяем ваш доступ...</p>';
                 try {
-                    // Используем новый, чистый URL, который будет перенаправлен на функцию
                     const response = await fetch('/api/get-content', { 
                         headers: {
                             'X-User-Email': email
