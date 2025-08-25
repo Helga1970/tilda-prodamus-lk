@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { Client } = require('pg');
+const cheerio = require('cheerio');
 
 const checkSubscription = async (email) => {
     const client = new Client({
@@ -23,11 +24,6 @@ const checkSubscription = async (email) => {
     } finally {
         await client.end();
     }
-};
-
-const extractBodyContent = (html) => {
-    const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-    return bodyMatch && bodyMatch[1] ? bodyMatch[1] : html;
 };
 
 exports.handler = async (event) => {
@@ -86,7 +82,9 @@ exports.handler = async (event) => {
             }
         });
 
-        const cleanContent = extractBodyContent(response.data);
+        // **Критическое исправление:** Используем cheerio для надежного извлечения контента
+        const $ = cheerio.load(response.data);
+        const cleanContent = $('body').html();
         
         return {
             statusCode: 200,
