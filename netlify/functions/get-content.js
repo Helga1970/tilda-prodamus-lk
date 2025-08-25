@@ -2,6 +2,9 @@ const axios = require('axios');
 const { Client } = require('pg');
 
 const checkSubscription = async (email) => {
+    console.log('--- Начинаем проверку подписки ---');
+    console.log('Email для проверки:', email);
+    
     const client = new Client({
         connectionString: process.env.NEON_DB_URL,
     });
@@ -9,19 +12,31 @@ const checkSubscription = async (email) => {
         await client.connect();
         const query = 'SELECT access_end_date FROM users WHERE email = $1';
         const result = await client.query(query, [email]);
+        
         if (result.rows.length === 0) {
+            console.log('Пользователь не найден в базе.');
             return false;
         }
         
-        const endDateMs = new Date(result.rows[0].access_end_date).getTime();
+        const dbDateString = result.rows[0].access_end_date;
+        console.log('Дата из базы данных (raw):', dbDateString);
+        
+        const endDateMs = new Date(dbDateString).getTime();
         const nowMs = new Date().getTime();
         
-        return endDateMs >= nowMs;
+        console.log('Дата окончания (timestamp):', endDateMs);
+        console.log('Текущая дата (timestamp):', nowMs);
+        
+        const hasAccess = endDateMs >= nowMs;
+        console.log('Результат сравнения (endDate >= now):', hasAccess);
+        
+        return hasAccess;
     } catch (error) {
-        console.error('Ошибка при проверке подписки:', error);
+        console.error('Критическая ошибка при проверке подписки:', error);
         return false;
     } finally {
         await client.end();
+        console.log('--- Проверка подписки завершена ---');
     }
 };
 
