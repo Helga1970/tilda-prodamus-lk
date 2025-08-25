@@ -51,8 +51,6 @@ exports.handler = async (event) => {
   }
 
   const password = crypto.randomBytes(4).toString('hex');
-  const accessEndDate = new Date();
-  accessEndDate.setDate(accessEndDate.getDate() + accessDays);
 
   const client = new Client({
       connectionString: process.env.NEON_DB_URL,
@@ -61,44 +59,71 @@ exports.handler = async (event) => {
   try {
     await client.connect();
 
-    const query = 'INSERT INTO users (email, password, name, subscription_type, access_end_date) VALUES ($1, $2, $3, $4, $5) RETURNING *';
-    const values = [customerEmail, password, customerName, subscriptionType, accessEndDate.toISOString()];
+    // Проверяем, существует ли пользователь
+    const userResult = await client.query('SELECT * FROM users WHERE email = $1', [customerEmail]);
+
+    if (userResult.rows.length > 0) {
+        // Пользователь существует - обновляем данные (продлеваем подписку)
+        const existingUser = userResult.rows[0];
+        const currentEndDate = new Date(existingUser.access_end_date);
+        
+        let newEndDate;
+        if (currentEndDate > new Date()) {
+            // Если подписка еще активна, добавляем дни к текущей дате окончания
+            newEndDate = new Date(currentEndDate.setDate(currentEndDate.getDate() + accessDays));
+        } else {
+            // Если подписка уже закончилась, начинаем отсчет с сегодняшнего дня
+            newEndDate = new Date();
+            newEndDate.setDate(newEndDate.getDate() + accessDays);
+        }
+
+        const updateQuery = 'UPDATE users SET subscription_type = $1, access_end_date = $2 WHERE email = $3';
+        const updateValues = [subscriptionType, newEndDate.toISOString(), customerEmail];
+        await client.query(updateQuery, updateValues);
+
+    } else {
+        // Пользователь не существует - создаем нового
+        const accessEndDate = new Date();
+        accessEndDate.setDate(accessEndDate.getDate() + accessDays);
+
+        const insertQuery = 'INSERT INTO users (email, password, name, subscription_type, access_end_date) VALUES ($1, $2, $3, $4, $5) RETURNING *';
+        const insertValues = [customerEmail, password, customerName, subscriptionType, accessEndDate.toISOString()];
+        await client.query(insertQuery, insertValues);
+
+        // Отправляем письмо с паролем
+        const transporter = nodemailer.createTransport({
+          host: 'in-v3.mailjet.com',
+          port: 587,
+          secure: false,
+          auth: {
+            user: '51db8ea3183fdd19e18f7cb18e52c32d',
+            pass: '98289e767513278bd19fc129544da3b6'
+          }
+        });
+
+        const mailOptions = {
+          from: 'pro.culinaria.ru@gmail.com',
+          to: customerEmail,
+          subject: 'Доступ к Личному кабинету',
+          html: `
+            <h2>Здравствуйте, ${customerName}!</h2>
+            <p>Благодарим за оплату. Ваш доступ к материалам открыт на **${accessDays}** дней.</p>
+            <p>Ваши данные для входа в Личный кабинет:</p>
+            <ul>
+              <li>**Email:** ${customerEmail}</li>
+              <li>**Пароль:** ${password}</li>
+            </ul>
+            <p>Войдите в свой Личный кабинет, чтобы получить доступ к материалам.</p>
+            <p>Ссылка на ЛК: https://tilda-prodamus-lk.netlify.app</p>
+          `,
+        };
     
-    const res = await client.query(query, values);
+        await transporter.sendMail(mailOptions);
+    }
     
-    // Отправка письма
-    const transporter = nodemailer.createTransport({
-      host: 'in-v3.mailjet.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: '51db8ea3183fdd19e18f7cb18e52c32d',
-        pass: '98289e767513278bd19fc129544da3b6'
-      }
-    });
-
-    const mailOptions = {
-      from: 'pro.culinaria.ru@gmail.com',
-      to: customerEmail,
-      subject: 'Доступ к Личному кабинету',
-      html: `
-        <h2>Здравствуйте, ${customerName}!</h2>
-        <p>Благодарим за оплату. Ваш доступ к материалам открыт на **${accessDays}** дней.</p>
-        <p>Ваши данные для входа в Личный кабинет:</p>
-        <ul>
-          <li>**Email:** ${customerEmail}</li>
-          <li>**Пароль:** ${password}</li>
-        </ul>
-        <p>Войдите в свой Личный кабинет, чтобы получить доступ к материалам.</p>
-        <p>Ссылка на ЛК: https://tilda-prodamus-lk.netlify.app</p>
-      `,
-    };
-
-    await transporter.sendMail(mailOptions);
-
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: "Email and database updated successfully." }),
+      body: JSON.stringify({ message: "Database and email updated successfully." }),
     };
 
   } catch (err) {
