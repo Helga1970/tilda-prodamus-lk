@@ -6,6 +6,10 @@
         body { font-family: sans-serif; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; }
         iframe { width: 100%; height: 1000px; border: 0; }
+        #menu ul { list-style: none; padding: 0; }
+        #menu li { margin-bottom: 10px; }
+        #menu a { text-decoration: none; color: #007BFF; cursor: pointer; }
+        #menu a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -14,8 +18,15 @@
         <button id="logoutButton">Выйти</button>
     </div>
 
+    <div id="menu">
+        <ul>
+            <li><a onclick="loadContent('chitalnyizal');">Читальный зал</a></li>
+            <li><a onclick="loadContent('new-book');">Новая книга</a> (пока пусто)</li>
+        </ul>
+    </div>
+
     <div id="content">
-        <p>Выберите материал из меню.</p>
+        <p>Загружаем контент...</p>
     </div>
 
     <script>
@@ -34,19 +45,23 @@
                     headers: { 'X-User-Email': user.email }
                 });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    contentDiv.innerHTML = '';
-                    const iframe = document.createElement('iframe');
-                    iframe.src = data.url;
-                    contentDiv.appendChild(iframe);
-                } else {
-                    const errorText = await response.text();
-                    contentDiv.innerHTML = `<p style="color:red;">${errorText}</p>`;
+                if (!response.ok) {
+                    contentDiv.innerHTML = `<p style="color:red;">${await response.text()}</p>`;
+                    return;
                 }
+
+                const data = await response.json(); // JSON с url
+                contentDiv.innerHTML = '';
+                const iframe = document.createElement('iframe');
+                iframe.src = data.url;
+                iframe.style.width = '100%';
+                iframe.style.height = '1000px';
+                iframe.frameBorder = 0;
+                contentDiv.appendChild(iframe);
+
             } catch (error) {
-                console.error('Ошибка при загрузке контента:', error);
-                contentDiv.innerHTML = '<p style="color:red;">Произошла ошибка при загрузке контента. Пожалуйста, попробуйте позже.</p>';
+                console.error(error);
+                contentDiv.innerHTML = '<p style="color:red;">Ошибка при загрузке контента.</p>';
             }
         };
 
@@ -55,8 +70,8 @@
             window.location.href = 'index.html';
         });
 
-        // Показываем меню по умолчанию
-        loadContent('menu');
+        // сразу грузим рабочую ссылку
+        loadContent('chitalnyizal');
     </script>
 </body>
 </html>
