@@ -9,6 +9,7 @@
   "dependencies": {
     "nodemailer": "^6.9.14",
     "netlify-lambda": "^2.0.16",
-    "pg": "^8.7.3"
+    "pg": "^8.7.3",
+    "axios": "^1.7.2"
   }
 }
