@@ -17,16 +17,16 @@
     </div>
 
     <script>
-        const loadContent = async (pageName) => {
-            const contentDiv = document.getElementById('content');
-            contentDiv.innerHTML = '<p>Загружаем контент...</p>';
-            
-            const user = JSON.parse(localStorage.getItem('user'));
-            if (!user || !user.email) {
-                window.location.href = 'index.html';
-                return;
-            }
+        const contentDiv = document.getElementById('content');
+        const logoutButton = document.getElementById('logoutButton');
+        const user = JSON.parse(localStorage.getItem('user'));
 
+        if (!user || !user.email) {
+            window.location.href = 'index.html';
+        }
+
+        const loadContent = async (pageName) => {
+            contentDiv.innerHTML = '<p>Загружаем контент...</p>';
             try {
                 const response = await fetch(`/api/get-content?page=${pageName}`, { 
                     headers: {
@@ -47,24 +47,12 @@
             }
         };
 
-        window.loadContent = loadContent;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const logoutButton = document.getElementById('logoutButton');
-            const user = JSON.parse(localStorage.getItem('user'));
-            
-            if (!user || !user.email) {
-                window.location.href = 'index.html';
-                return;
-            }
-
-            logoutButton.addEventListener('click', () => {
-                localStorage.removeItem('user');
-                window.location.href = 'index.html';
-            });
-
-            loadContent('menu');
+        logoutButton.addEventListener('click', () => {
+            localStorage.removeItem('user');
+            window.location.href = 'index.html';
         });
+
+        loadContent('menu');
     </script>
 </body>
 </html>
