@@ -86,7 +86,6 @@ exports.handler = async (event) => {
             }
         });
 
-        // **Критическое исправление:** Извлекаем только контент из тега <body>
         const cleanContent = extractBodyContent(response.data);
         
         return {
