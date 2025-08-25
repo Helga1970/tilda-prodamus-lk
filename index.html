@@ -103,8 +103,6 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // **Критическое исправление:** Убеждаемся, что данные сохранены,
-                    // прежде чем перейти на другую страницу.
                     localStorage.setItem('user', JSON.stringify(data.user)); 
                     window.location.href = 'lk.html';
                 } else {
