@@ -1,47 +1,62 @@
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const logoutButton = document.getElementById('logoutButton');
-        const contentDiv = document.getElementById('content');
-        const user = JSON.parse(localStorage.getItem('user'));
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Личный кабинет</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Добро пожаловать в Личный кабинет!</h1>
+        <button id="logoutButton">Выйти</button>
+    </div>
 
-        // Проверяем авторизацию. Если пользователь не найден, перенаправляем на страницу входа.
-        if (!user || !user.email) {
-            window.location.href = 'index.html';
-            return;
-        }
+    <div id="content">
+    </div>
 
-        // Обработчик для кнопки "Выйти"
-        logoutButton.addEventListener('click', () => {
-            localStorage.removeItem('user');
-            window.location.href = 'index.html';
-        });
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const logoutButton = document.getElementById('logoutButton');
+            const contentDiv = document.getElementById('content');
+            const user = JSON.parse(localStorage.getItem('user'));
 
-        // Функция для загрузки защищённого контента
-        const loadProtectedContent = async (email) => {
-            contentDiv.innerHTML = '<p>Проверяем ваш доступ...</p>';
-            try {
-                // Запрос к нашей новой Netlify-функции, которая будет проксировать контент.
-                const response = await fetch('/.netlify/functions/get-content', {
-                    headers: {
-                        // Передаём email пользователя в заголовке для проверки доступа
-                        'X-User-Email': email
-                    }
-                });
-
-                if (response.ok) {
-                    const contentHtml = await response.text();
-                    contentDiv.innerHTML = contentHtml;
-                } else {
-                    const errorText = await response.text();
-                    contentDiv.innerHTML = `<p style="color:red;">${errorText}</p>`;
-                }
-            } catch (error) {
-                console.error('Ошибка при загрузке контента:', error);
-                contentDiv.innerHTML = '<p style="color:red;">Произошла ошибка при загрузке контента. Пожалуйста, попробуйте позже.</p>';
+            if (!user || !user.email) {
+                window.location.href = 'index.html';
+                return;
             }
-        };
 
-        // Загружаем контент сразу после загрузки страницы
-        loadProtectedContent(user.email);
-    });
-</script>
+            logoutButton.addEventListener('click', () => {
+                localStorage.removeItem('user');
+                window.location.href = 'index.html';
+            });
+
+            const loadProtectedContent = async (email) => {
+                contentDiv.innerHTML = '<p>Проверяем ваш доступ...</p>';
+                try {
+                    // Используем новый, чистый URL, который будет перенаправлен на функцию
+                    const response = await fetch('/api/get-content', { 
+                        headers: {
+                            'X-User-Email': email
+                        }
+                    });
+
+                    if (response.ok) {
+                        const contentHtml = await response.text();
+                        contentDiv.innerHTML = contentHtml;
+                    } else {
+                        const errorText = await response.text();
+                        contentDiv.innerHTML = `<p style="color:red;">${errorText}</p>`;
+                    }
+                } catch (error) {
+                    console.error('Ошибка при загрузке контента:', error);
+                    contentDiv.innerHTML = '<p style="color:red;">Произошла ошибка при загрузке контента. Пожалуйста, попробуйте позже.</p>';
+                }
+            };
+
+            loadProtectedContent(user.email);
+        });
+    </script>
+</body>
+</html>
