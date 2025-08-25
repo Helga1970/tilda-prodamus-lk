@@ -1,7 +1,6 @@
 const axios = require('axios');
 const { Client } = require('pg');
 
-// Функция для проверки подписки
 const checkSubscription = async (email) => {
     const client = new Client({
         connectionString: process.env.NEON_DB_URL,
@@ -25,8 +24,6 @@ const checkSubscription = async (email) => {
 };
 
 exports.handler = async (event) => {
-    // Получаем email пользователя из заголовков.
-    // X-User-Email - это специальный заголовок, который мы передаем с фронтенда.
     const userEmail = event.headers['x-user-email'];
 
     if (!userEmail) {
@@ -45,17 +42,14 @@ exports.handler = async (event) => {
         };
     }
 
-    // Если доступ есть, проксируем контент с Tilda.
     try {
         const tildaPageUrl = 'https://pro-culinaria.ru/chitalnyizal';
         const response = await axios.get(tildaPageUrl, {
             headers: {
-                // Этот заголовок позволяет обойти защиту по домену-источнику.
                 'Referer': 'https://pro-culinaria.ru/'
             }
         });
         
-        // Возвращаем HTML-содержимое страницы.
         return {
             statusCode: 200,
             headers: { 'Content-Type': 'text/html' },
