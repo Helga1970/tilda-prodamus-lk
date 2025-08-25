@@ -1,48 +1,46 @@
 const axios = require('axios');
 
 exports.handler = async (event) => {
-    const { publickey, pageid } = event.queryStringParameters;
-
-    const tildaPublicKey = process.env.TILDA_PUBLIC_KEY;
-    const tildaSecretKey = process.env.TILDA_SECRET_KEY;
-
-    if (!publickey || publickey !== tildaPublicKey) {
-        return {
-            statusCode: 401,
-            body: 'Not authorized'
-        };
-    }
-
     try {
-        // Берём pageid из запроса, если есть
-        const pageId = pageid || "74377421";
+        if (event.httpMethod !== "POST") {
+            return { statusCode: 405, body: "Method Not Allowed" };
+        }
+
+        const body = JSON.parse(event.body || "{}");
+        const pageId = body.pageid;
+
+        if (!pageId) {
+            return { statusCode: 400, body: "No pageid provided" };
+        }
+
+        const tildaPublicKey = process.env.TILDA_PUBLIC_KEY;
+        const tildaSecretKey = process.env.TILDA_SECRET_KEY;
 
         const apiUrl = `https://api.tildacdn.info/v1/getpagefullexport/?publickey=${tildaPublicKey}&secretkey=${tildaSecretKey}&pageid=${pageId}`;
         const apiResponse = await axios.get(apiUrl);
 
         if (apiResponse.data.status !== 'FOUND') {
-            return {
-                statusCode: 500,
-                body: 'Failed to get page from Tilda API'
-            };
+            return { statusCode: 500, body: "Failed to fetch page from Tilda API" };
         }
 
-        const pageHtml = apiResponse.data.result.html;
+        const pageData = apiResponse.data.result;
+        const pageHtml = pageData.fullhtml || "";
 
-        // Возвращаем HTML прямо в ответе
+        // Пока просто выводим в лог
+        console.log("Tilda webhook synced:", {
+            pageId: pageId,
+            title: pageData.title,
+            url: pageData.url
+        });
+
+        // Возвращаем успешный ответ
         return {
             statusCode: 200,
-            headers: {
-                "Content-Type": "text/html; charset=utf-8"
-            },
-            body: pageHtml
+            body: `Page ${pageId} synced successfully`
         };
 
     } catch (error) {
-        console.error('Tilda webhook error:', error);
-        return {
-            statusCode: 500,
-            body: 'Error processing request'
-        };
+        console.error("Webhook error:", error);
+        return { statusCode: 500, body: "Webhook error" };
     }
 };
