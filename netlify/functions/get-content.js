@@ -13,13 +13,10 @@ const checkSubscription = async (email) => {
             return false;
         }
         
-        const endDate = new Date(result.rows[0].access_end_date);
+        const endDateMs = new Date(result.rows[0].access_end_date).getTime();
+        const nowMs = new Date().getTime();
         
-        endDate.setHours(23, 59, 59, 999);
-        
-        const now = new Date();
-        
-        return endDate > now;
+        return endDateMs >= nowMs;
     } catch (error) {
         console.error('Ошибка при проверке подписки:', error);
         return false;
