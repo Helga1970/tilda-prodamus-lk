@@ -1,4 +1,8 @@
 const { Client } = require('pg');
+const crypto = require('crypto');
+
+// Временное хранилище токенов (для теста, можно потом заменить на базу)
+const tokenStore = {};
 
 const checkSubscription = async (email) => {
     const client = new Client({
@@ -22,16 +26,23 @@ const checkSubscription = async (email) => {
     }
 };
 
+// Генерация случайного токена
+const generateToken = (url) => {
+    const token = crypto.randomBytes(16).toString('hex');
+    // Сохраняем токен на 5 минут
+    tokenStore[token] = { url, expires: Date.now() + 5 * 60 * 1000 };
+    return token;
+};
+
 exports.handler = async (event) => {
     const userEmail = event.headers['x-user-email'];
-    const page = event.queryStringParameters.page || 'menu';
+    const page = event.queryStringParameters.page;
 
     if (!userEmail) {
         return { statusCode: 401, body: 'Не авторизован.' };
     }
 
     const hasAccess = await checkSubscription(userEmail);
-
     if (!hasAccess) {
         return { statusCode: 403, body: 'Доступ запрещён. Ваша подписка истекла.' };
     }
@@ -41,27 +52,27 @@ exports.handler = async (event) => {
         'new-book': 'https://pro-culinaria.ru/new-book'
     };
 
-    if (page === 'menu') {
-        const menuHtml = `
-            <h2>Доступные материалы:</h2>
-            <ul>
-                <li><a href="#" onclick="loadContent('chitalnyizal'); return false;">Читальный зал</a></li>
-                <li><a href="#" onclick="loadContent('new-book'); return false;">Новая книга</a></li>
-            </ul>
-        `;
-        return { statusCode: 200, headers: { 'Content-Type': 'text/html' }, body: menuHtml };
-    }
-
     const pageUrl = pages[page];
-
     if (!pageUrl) {
         return { statusCode: 404, body: 'Страница не найдена.' };
     }
 
-    // **Новый подход для iframe:** возвращаем URL, а не HTML
+    const token = generateToken(pageUrl);
+
     return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: pageUrl })
+        body: JSON.stringify({ token })
     };
+};
+
+// Функция для редиректа (в отдельном redirect.js)
+exports.lookupUrlByToken = (token) => {
+    const record = tokenStore[token];
+    if (!record) return null;
+    if (Date.now() > record.expires) {
+        delete tokenStore[token];
+        return null;
+    }
+    return record.url;
 };
