@@ -3,9 +3,11 @@ const path = require('path');
 const axios = require('axios');
 
 exports.handler = async (event) => {
-    const { pageid, publickey } = event.queryStringParameters;
+    const { publickey } = event.queryStringParameters;
 
-    // Ключи берутся из переменных окружения
+    // Hardcode the specific page ID you want to sync
+    const targetPageId = "62118987";
+
     const tildaPublicKey = process.env.TILDA_PUBLIC_KEY;
     const tildaSecretKey = process.env.TILDA_SECRET_KEY;
 
@@ -16,15 +18,8 @@ exports.handler = async (event) => {
         };
     }
 
-    if (!pageid) {
-        return {
-            statusCode: 400,
-            body: 'Missing page ID'
-        };
-    }
-
     try {
-        const apiUrl = `https://api.tildacdn.info/v1/getpagefullexport/?publickey=${tildaPublicKey}&secretkey=${tildaSecretKey}&pageid=${pageid}`;
+        const apiUrl = `https://api.tildacdn.info/v1/getpagefullexport/?publickey=${tildaPublicKey}&secretkey=${tildaSecretKey}&pageid=${targetPageId}`;
         const apiResponse = await axios.get(apiUrl);
 
         if (apiResponse.data.status !== 'FOUND') {
@@ -36,11 +31,11 @@ exports.handler = async (event) => {
 
         const pageHtml = apiResponse.data.result.html;
         const pageFileName = 'lk-content.html';
-        const filePath = path.join('/tmp', pageFileName);
+        const filePath = path.join(process.cwd(), pageFileName);
 
         await fs.writeFile(filePath, pageHtml);
 
-        console.log(`Successfully updated ${pageFileName}`);
+        console.log(`Successfully updated ${pageFileName} from page ID ${targetPageId}`);
 
         return {
             statusCode: 200,
