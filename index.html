@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Личный кабинет</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -104,7 +103,6 @@
             <p id="message"></p>
         </div>
     </div>
-
     <div class="user-content" id="userContent">
         <header class="header">
             <h1 id="userNameHeader"></h1>
@@ -122,12 +120,7 @@
             <button class="login-button" onclick="logout()">Выйти</button>
         </div>
     </div>
-
     <script>
-        const supabaseUrl = 'https://jszlcxcwykfguwzwtphc.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpzemxjeGN3eWtmZ3V3end0cGhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwNDg4MzIsImV4cCI6MjA3MTYyNDgzMn0.xQdz0VKktBrx9TRxbrJjP1IRy6H1v8sYGIuotAVO0QI';
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
         async function login() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
@@ -136,26 +129,27 @@
                 messageElement.textContent = 'Пожалуйста, заполните все поля.';
                 return;
             }
-            messageElement.textContent = 'Подождите...';
-            const { data, error } = await supabase
-                .from('users')
-                .select('*')
-                .eq('email', email)
-                .eq('password', password)
-                .limit(1);
-            if (error) {
+            messageElement.textContent = 'Проверяем...';
+            try {
+                const response = await fetch('/.netlify/functions/prodamus-webhook', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: email, password: password })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('userContent').style.display = 'block';
+                    document.getElementById('userNameHeader').textContent = `Привет, ${data.user.name}!`;
+                    messageElement.textContent = '';
+                } else {
+                    messageElement.textContent = data.message;
+                }
+            } catch (error) {
                 console.error('Ошибка при запросе:', error);
                 messageElement.textContent = 'Произошла ошибка. Пожалуйста, попробуйте позже.';
-                return;
-            }
-            if (data && data.length > 0) {
-                const user = data[0];
-                document.getElementById('loginForm').style.display = 'none';
-                document.getElementById('userContent').style.display = 'block';
-                document.getElementById('userNameHeader').textContent = `Привет, ${user.name}!`;
-                messageElement.textContent = '';
-            } else {
-                messageElement.textContent = 'Неверный email или пароль.';
             }
         }
         function logout() {
