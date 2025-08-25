@@ -17,12 +17,42 @@
     </div>
 
     <script>
+        // Эта функция будет загружать контент. Мы передаём в неё email
+        const loadContent = async (email, pageName) => {
+            const contentDiv = document.getElementById('content');
+            contentDiv.innerHTML = '<p>Загружаем контент...</p>';
+
+            try {
+                const response = await fetch(`/api/get-content?page=${pageName}`, { 
+                    headers: {
+                        'X-User-Email': email
+                    }
+                });
+
+                if (response.ok) {
+                    const contentHtml = await response.text();
+                    contentDiv.innerHTML = contentHtml;
+                } else {
+                    const errorText = await response.text();
+                    contentDiv.innerHTML = `<p style="color:red;">${errorText}</p>`;
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке контента:', error);
+                contentDiv.innerHTML = '<p style="color:red;">Произошла ошибка при загрузке контента. Пожалуйста, попробуйте позже.</p>';
+            }
+        };
+
+        // Эта функция будет доступна глобально для кнопок меню
+        window.loadContent = loadContent;
+
         document.addEventListener('DOMContentLoaded', () => {
             const logoutButton = document.getElementById('logoutButton');
-            const contentDiv = document.getElementById('content');
             const user = JSON.parse(localStorage.getItem('user'));
+            
+            console.log('Данные пользователя из localStorage:', user); // Проверяем, что здесь есть email
 
             if (!user || !user.email) {
+                console.error('Пользователь не найден в localStorage. Перенаправляем на страницу входа.');
                 window.location.href = 'index.html';
                 return;
             }
@@ -32,33 +62,8 @@
                 window.location.href = 'index.html';
             });
 
-            const loadContent = async (pageName) => {
-                contentDiv.innerHTML = '<p>Загружаем контент...</p>';
-                try {
-                    const response = await fetch(`/api/get-content?page=${pageName}`, { 
-                        headers: {
-                            'X-User-Email': user.email
-                        }
-                    });
-
-                    if (response.ok) {
-                        const contentHtml = await response.text();
-                        contentDiv.innerHTML = contentHtml;
-                    } else {
-                        const errorText = await response.text();
-                        contentDiv.innerHTML = `<p style="color:red;">${errorText}</p>`;
-                    }
-                } catch (error) {
-                    console.error('Ошибка при загрузке контента:', error);
-                    contentDiv.innerHTML = '<p style="color:red;">Произошла ошибка при загрузке контента. Пожалуйста, попробуйте позже.</p>';
-                }
-            };
-            
             // Загружаем меню сразу после загрузки страницы
-            loadContent('menu');
-            
-            // Делаем функцию доступной глобально, чтобы она работала по клику
-            window.loadContent = loadContent;
+            loadContent(user.email, 'menu');
         });
     </script>
 </body>
