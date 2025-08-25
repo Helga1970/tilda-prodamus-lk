@@ -11,21 +11,17 @@ const handleProdamusWebhook = async (client, payload) => {
             body: JSON.stringify({ message: "Payment was not successful." }),
         };
     }
-
     const customerEmail = payload.customer_email;
     const customerName = payload.order_num ? payload.order_num : 'Клиент';
-    
     if (!customerEmail) {
         return {
             statusCode: 400,
             body: JSON.stringify({ message: "Missing customer email." }),
         };
     }
-
     let accessDays;
     let subscriptionType;
     const paymentSum = parseFloat(payload.sum);
-
     if (paymentSum === 350.00) {
         accessDays = 30;
         subscriptionType = '30_days';
@@ -38,14 +34,11 @@ const handleProdamusWebhook = async (client, payload) => {
             body: JSON.stringify({ message: "Unknown payment amount." }),
         };
     }
-
     const password = crypto.randomBytes(4).toString('hex');
     const userResult = await client.query('SELECT * FROM users WHERE email = $1', [customerEmail]);
-
     if (userResult.rows.length > 0) {
         const existingUser = userResult.rows[0];
         const currentEndDate = new Date(existingUser.access_end_date);
-        
         let newEndDate;
         if (currentEndDate > new Date()) {
             newEndDate = new Date(currentEndDate.setDate(currentEndDate.getDate() + accessDays));
@@ -53,18 +46,15 @@ const handleProdamusWebhook = async (client, payload) => {
             newEndDate = new Date();
             newEndDate.setDate(newEndDate.getDate() + accessDays);
         }
-
         const updateQuery = 'UPDATE users SET subscription_type = $1, access_end_date = $2 WHERE email = $3';
         const updateValues = [subscriptionType, newEndDate.toISOString(), customerEmail];
         await client.query(updateQuery, updateValues);
     } else {
         const accessEndDate = new Date();
         accessEndDate.setDate(accessEndDate.getDate() + accessDays);
-
         const insertQuery = 'INSERT INTO users (email, password, name, subscription_type, access_end_date) VALUES ($1, $2, $3, $4, $5) RETURNING *';
         const insertValues = [customerEmail, password, customerName, subscriptionType, accessEndDate.toISOString()];
         await client.query(insertQuery, insertValues);
-
         const transporter = nodemailer.createTransport({
           host: 'in-v3.mailjet.com',
           port: 587,
@@ -74,7 +64,6 @@ const handleProdamusWebhook = async (client, payload) => {
             pass: '98289e767513278bd19fc129544da3b6'
           }
         });
-
         const mailOptions = {
           from: 'pro.culinaria.ru@gmail.com',
           to: customerEmail,
@@ -93,7 +82,6 @@ const handleProdamusWebhook = async (client, payload) => {
         };
         await transporter.sendMail(mailOptions);
     }
-
     return {
         statusCode: 200,
         body: JSON.stringify({ message: "Database and email updated successfully." }),
@@ -105,22 +93,21 @@ exports.handler = async (event) => {
     const client = new Client({
         connectionString: process.env.NEON_DB_URL,
     });
-
     try {
         await client.connect();
-
-        // Проверяем, пришел ли запрос от Prodamus (использует Content-Type: application/x-www-form-urlencoded)
+        // Определяем тип запроса по Content-Type
         if (event.headers['content-type'] && event.headers['content-type'].includes('application/x-www-form-urlencoded')) {
+            // Это вебхук от Prodamus
             const params = new URLSearchParams(event.body);
             const payload = Object.fromEntries(params.entries());
             return await handleProdamusWebhook(client, payload);
         } else {
-            // Это запрос на авторизацию (использует Content-Type: application/json)
+            // Это запрос на авторизацию
+            // Мы пытаемся разобрать тело как JSON, на случай, если форма отправляет так
             const { email, password } = JSON.parse(event.body);
             const query = 'SELECT * FROM users WHERE email = $1 AND password = $2';
             const values = [email, password];
             const res = await client.query(query, values);
-
             if (res.rows.length > 0) {
                 return {
                     statusCode: 200,
@@ -139,7 +126,8 @@ exports.handler = async (event) => {
             }
         }
     } catch (err) {
-        console.error('Ошибка в обработчике:', err);
+        // Логируем ошибку для отладки
+        console.error('Ошибка в обработчике:', err.message, 'Event body:', event.body);
         return {
             statusCode: 500,
             body: JSON.stringify({
