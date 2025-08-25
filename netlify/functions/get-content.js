@@ -15,8 +15,6 @@ const checkSubscription = async (email) => {
         
         const endDate = new Date(result.rows[0].access_end_date);
         
-        // **Исправление:** Добавляем к дате окончания 23 часа и 59 минут,
-        // чтобы подписка работала до конца дня
         endDate.setHours(23, 59, 59, 999);
         
         const now = new Date();
@@ -59,8 +57,8 @@ exports.handler = async (event) => {
         const menuHtml = `
             <h2>Доступные материалы:</h2>
             <ul>
-                <li><a href="#" onclick="loadContent(user.email, 'chitalnyizal'); return false;">Читальный зал</a></li>
-                <li><a href="#" onclick="loadContent(user.email, 'new-book'); return false;">Новая книга</a></li>
+                <li><a href="#" onclick="loadContent('chitalnyizal'); return false;">Читальный зал</a></li>
+                <li><a href="#" onclick="loadContent('new-book'); return false;">Новая книга</a></li>
             </ul>
         `;
         return {
