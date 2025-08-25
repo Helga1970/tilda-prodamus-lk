@@ -32,12 +32,12 @@
                 window.location.href = 'index.html';
             });
 
-            const loadProtectedContent = async (email) => {
-                contentDiv.innerHTML = '<p>Проверяем ваш доступ...</p>';
+            const loadContent = async (pageName) => {
+                contentDiv.innerHTML = '<p>Загружаем контент...</p>';
                 try {
-                    const response = await fetch('/api/get-content', { 
+                    const response = await fetch(`/api/get-content?page=${pageName}`, { 
                         headers: {
-                            'X-User-Email': email
+                            'X-User-Email': user.email
                         }
                     });
 
@@ -53,8 +53,12 @@
                     contentDiv.innerHTML = '<p style="color:red;">Произошла ошибка при загрузке контента. Пожалуйста, попробуйте позже.</p>';
                 }
             };
-
-            loadProtectedContent(user.email);
+            
+            // Загружаем меню сразу после загрузки страницы
+            loadContent('menu');
+            
+            // Делаем функцию доступной глобально, чтобы она работала по клику
+            window.loadContent = loadContent;
         });
     </script>
 </body>
