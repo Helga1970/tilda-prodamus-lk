@@ -2,42 +2,130 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Личный кабинет</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет | Pro-Culinaria</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Circe+Rounded:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Circe Rounded', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: url('https://raw.githubusercontent.com/Helga1970/tilda-prodamus-lk/main/a7f3dec3-aa46-42ce-a500-d40abb995b63.png');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed; /* Фон не скроллится */
+            color: #333;
+        }
+
+        .lk-container {
+            background-color: rgba(255, 255, 255, 0.85); /* Белый полупрозрачный фон */
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%; /* Адаптивная ширина */
+            max-width: 600px; /* Максимальная ширина для больших экранов */
+            box-sizing: border-box;
+            border-radius: 0; /* Без скруглений */
+        }
+
+        h1 {
+            color: #fb4d35; /* Фирменный коралловый цвет */
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        .links-section {
+            display: flex;
+            flex-direction: column; /* Ссылки в столбик */
+            gap: 20px; /* Расстояние между ссылками */
+            margin-top: 30px;
+        }
+
+        .lk-link {
+            display: block;
+            padding: 15px 25px;
+            background-color: #fb4d35; /* Фирменный коралловый цвет */
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 700;
+            transition: background-color 0.3s ease;
+            border-radius: 0; /* Без скруглений */
+            text-align: center;
+        }
+
+        .lk-link:hover {
+            background-color: #e5462e; /* Более тёмный оттенок при наведении */
+        }
+        
+        .logout-button {
+            margin-top: 40px;
+            background: none;
+            border: none;
+            color: #fb4d35;
+            font-family: 'Circe Rounded', sans-serif;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        
+        .logout-button:hover {
+            opacity: 0.8;
+        }
+
+        /* Медиа-запросы для мобильных устройств (можно настроить точнее) */
+        @media (max-width: 768px) {
+            .lk-container {
+                padding: 20px;
+                width: 95%;
+            }
+            h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            .lk-link {
+                font-size: 16px;
+                padding: 12px 20px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <a href="#" onclick="checkAndRedirect(); return false;">Читальный зал</a>
+    <div class="lk-container">
+        <h1>Добро пожаловать в Личный кабинет!</h1>
+        
+        <div class="links-section">
+            <a href="#" class="lk-link">Ознакомительный раздел</a>
+            <a href="https://pro-culinaria-lk.proculinaria-book.ru/content.html" class="lk-link">Читальный зал Библиотеки</a>
+        </div>
+        
+        <button class="logout-button" id="logoutButton">Выйти из кабинета</button>
+    </div>
 
     <script>
-        const checkAndRedirect = async () => {
-            const user = JSON.parse(localStorage.getItem('user'));
-            
-            // 1. Проверяем, есть ли данные пользователя
-            if (!user || !user.email) {
-                alert('Ошибка: Данные пользователя не найдены. Пожалуйста, попробуйте войти снова.');
-                window.location.href = '/';
-                return;
+        // Проверяем авторизацию при загрузке страницы
+        window.onload = function() {
+            const user = localStorage.getItem('user');
+            if (!user) {
+                // Если пользователь не авторизован, перенаправляем на страницу входа
+                window.location.href = 'https://pro-culinaria-lk.proculinaria-book.ru';
             }
-
-            try {
-                // 2. Делаем запрос к нашей функции для проверки подписки
-                const response = await fetch('/.netlify/functions/get-content?action=check-access', {
-                    headers: { 'X-User-Email': user.email } // Передаем email пользователя для проверки
-                });
-
-                // 3. Если подписка активна (статус 200), перенаправляем на сайт с iframe
-                if (response.ok) {
-                    window.location.href = 'https://pro-culinaria-library.netlify.app/';
-                } else {
-                    // 4. Если подписка неактивна (статус не 200), показываем ошибку
-                    const errorMessage = await response.text();
-                    alert(`Ошибка: ${errorMessage}`);
-                }
-
-            } catch (e) {
-                console.error('Ошибка:', e);
-                alert('Произошла ошибка при получении доступа к материалам. Пожалуйста, попробуйте позже.');
-            }
+            // Здесь можно добавить логику для отображения имени пользователя или других данных
+            // const userData = JSON.parse(user);
+            // document.querySelector('h1').textContent = `Добро пожаловать, ${userData.name}!`;
         };
+
+        // Обработчик кнопки "Выйти"
+        document.getElementById('logoutButton').addEventListener('click', function() {
+            localStorage.removeItem('user'); // Удаляем данные пользователя из localStorage
+            window.location.href = 'https://pro-culinaria-lk.proculinaria-book.ru'; // Перенаправляем на страницу входа
+        });
     </script>
 </body>
 </html>
