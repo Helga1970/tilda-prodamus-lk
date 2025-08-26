@@ -64,7 +64,7 @@ const handleProdamusWebhook = async (client, payload) => {
             }
         });
         const mailOptions = {
-            from: 'pro.culinaria.ru@gmail.com',
+            from: 'mail@proculinaria.ru',
             to: customerEmail,
             subject: 'Доступ к Личному кабинету',
             html: `
