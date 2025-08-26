@@ -71,7 +71,7 @@ exports.handler = async (event) => {
         });
 
         const mailOptions = {
-            from: process.env.EMAIL_SENDER,
+            from: 'mail@proculinaria.ru',
             to: email,
             subject: 'Регистрация на сайте Pro-Culinaria',
             html: `
