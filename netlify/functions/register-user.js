@@ -1,24 +1,22 @@
 const { Client } = require('pg');
 const bcrypt = require('bcryptjs');
+const nodemailer = require('nodemailer');
 
 exports.handler = async (event) => {
-    // 1. Обязательные заголовки CORS для всех ответов
     const headers = {
         'Access-Control-Allow-Origin': 'https://pro-culinaria.ru',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
     };
 
-    // 2. Обработка предварительного OPTIONS-запроса от браузера
     if (event.httpMethod === 'OPTIONS') {
         return {
-            statusCode: 204, // 204 No Content
+            statusCode: 204,
             headers: headers,
             body: ''
         };
     }
 
-    // Добавляем заголовки к основному ответу
     try {
         if (event.httpMethod !== 'POST' || !event.body) {
             return {
@@ -29,7 +27,7 @@ exports.handler = async (event) => {
         }
 
         const { name, email, password } = JSON.parse(event.body);
-        
+
         if (!name || !email || !password) {
             return {
                 statusCode: 400,
@@ -55,6 +53,7 @@ exports.handler = async (event) => {
             };
         }
 
+        // Хэширование пароля перед сохранением
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
         const accessEndDate = new Date();
@@ -63,14 +62,46 @@ exports.handler = async (event) => {
         const insertUserQuery = 'INSERT INTO users (name, email, password, access_end_date) VALUES ($1, $2, $3, $4) RETURNING id';
         await client.query(insertUserQuery, [name, email, hashedPassword, accessEndDate.toISOString()]);
         
-        await client.end();
+        // Отправка письма пользователю
+        const transporter = nodemailer.createTransport({
+            service: 'gmail', // Вы можете использовать другой сервис (например, SendGrid, Mailgun)
+            auth: {
+                user: process.env.EMAIL_USER, // Ваша почта
+                pass: process.env.EMAIL_PASS  // Ваш пароль или App Password
+            }
+        });
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'Регистрация на сайте Pro-Culinaria',
+            html: `
+                <p>Здравствуйте, ${name}!</p>
+                <p>Вы успешно зарегистрировались на сайте Pro-Culinaria.</p>
+                <p>Ваши данные для входа:</p>
+                <ul>
+                    <li>**E-mail:** ${email}</li>
+                    <li>**Пароль:** ${password}</li>
+                </ul>
+                <p>Вы можете войти в свой личный кабинет по этой ссылке: <a href="https://pro-culinaria-lk.proculinaria-book.ru">Войти</a></p>
+                <p>С уважением,<br>Команда Pro-Culinaria</p>
+            `
+        };
+
+        try {
+            await transporter.sendMail(mailOptions);
+            console.log('Email sent successfully!');
+        } catch (emailError) {
+            console.error('Error sending email:', emailError);
+        } finally {
+            await client.end();
+        }
 
         return {
             statusCode: 200,
             headers: headers,
-            body: JSON.stringify({ message: 'Регистрация прошла успешно!' })
+            body: JSON.stringify({ message: 'Регистрация прошла успешно! Проверьте свой e-mail для входа.' })
         };
-
     } catch (error) {
         console.error('Ошибка при регистрации пользователя:', error);
         return {
