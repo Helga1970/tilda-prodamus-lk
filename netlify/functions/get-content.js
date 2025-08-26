@@ -74,8 +74,19 @@ exports.handler = async (event) => {
     }
 
     switch (action) {
+        // Добавлен новый action для проверки доступа
+        case 'check-access':
+            const userEmailFromHeader = event.headers['x-user-email'];
+            if (!userEmailFromHeader) {
+                return { statusCode: 401, body: 'Не авторизован.' };
+            }
+            const hasAccess = await checkSubscription(userEmailFromHeader);
+            if (!hasAccess) {
+                return { statusCode: 403, body: 'Доступ запрещён. Ваша подписка истекла.' };
+            }
+            return { statusCode: 200, body: 'Доступ разрешен.' };
+
         // Случай 1: Генерация одноразового токена.
-        // Используется для безопасного доступа к прокси.
         case 'generate':
             const userEmail = event.headers['x-user-email'];
 
@@ -83,8 +94,8 @@ exports.handler = async (event) => {
                 return { statusCode: 401, body: 'Не авторизован.' };
             }
 
-            const hasAccess = await checkSubscription(userEmail);
-            if (!hasAccess) {
+            const hasAccessGenerate = await checkSubscription(userEmail);
+            if (!hasAccessGenerate) {
                 return { statusCode: 403, body: 'Доступ запрещён. Ваша подписка истекла.' };
             }
 
@@ -116,8 +127,6 @@ exports.handler = async (event) => {
             }
 
         // Случай 2: Проксирование контента.
-        // Используется для отображения контента через прокси,
-        // что скрывает оригинальную ссылку.
         case 'proxy':
             if (!token) {
                 return { statusCode: 400, body: 'Токен не указан.' };
@@ -136,11 +145,9 @@ exports.handler = async (event) => {
 
                 const pageId = result.rows[0].page_id;
                 
-                // Удаляем токен после первого использования для дополнительной безопасности
                 const deleteQuery = 'DELETE FROM tokens WHERE token = $1';
                 await dbClient.query(deleteQuery, [token]);
 
-                // Получаем и возвращаем контент с Tilda
                 const tildaResponse = await getTildaContent(pageId);
                 return tildaResponse;
 
