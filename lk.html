@@ -11,6 +11,13 @@
         const user = JSON.parse(localStorage.getItem('user'));
 
         const goToPage = async (pageName) => {
+            // Проверка, что данные пользователя есть, прежде чем делать запрос
+            if (!user || !user.email) {
+                alert('Ошибка: Данные пользователя не найдены. Пожалуйста, попробуйте войти снова.');
+                window.location.href = '/index.html';
+                return;
+            }
+
             try {
                 // Шаг 1: Запрашиваем токен у нашей единой функции
                 const generateUrl = `/.netlify/functions/library-proxy?action=generate&page=${pageName}`;
