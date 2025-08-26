@@ -9,10 +9,20 @@
 
     <script>
         const getMaterialsUrl = async () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            
+            // Проверяем авторизацию пользователя
+            if (!user || !user.email) {
+                alert('Ошибка: Данные пользователя не найдены. Пожалуйста, попробуйте войти снова.');
+                window.location.href = '/';
+                return;
+            }
+
             try {
-                // Здесь мы просто запрашиваем URL, не передавая никакой информации о пользователе
-                // Предполагаем, что доступ уже проверен на странице входа
-                const response = await fetch('/.netlify/functions/get-materials-url');
+                // Делаем запрос к нашей функции для получения защищенного URL
+                const response = await fetch('/.netlify/functions/get-content?action=get-url', {
+                    headers: { 'X-User-Email': user.email } // Передаем email пользователя
+                });
 
                 if (!response.ok) {
                     const errorMessage = await response.text();
