@@ -1,7 +1,12 @@
 [build]
-  command = "npm install"        # Устанавливаем все зависимости из корня
+  command = "npm install"
   functions = "netlify/functions"
   publish = "."
+
+[[redirects]]
+  from = "/chitalnyizal"
+  to = "/.netlify/functions/library-proxy?action=proxy&page=chitalnyizal"
+  status = 200
 
 [[redirects]]
   from = "/api/*"
