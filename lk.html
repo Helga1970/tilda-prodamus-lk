@@ -19,51 +19,51 @@
             background-size: cover;
             background-position: center center;
             background-repeat: no-repeat;
-            background-attachment: fixed; /* Фон не скроллится */
+            background-attachment: fixed;
             color: #333;
         }
 
         .lk-container {
-            background-color: rgba(255, 255, 255, 0.85); /* Белый полупрозрачный фон */
+            background-color: rgba(255, 255, 255, 0.85);
             padding: 30px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             text-align: center;
-            width: 90%; /* Адаптивная ширина */
-            max-width: 600px; /* Максимальная ширина для больших экранов */
+            width: 90%;
+            max-width: 600px;
             box-sizing: border-box;
-            border-radius: 0; /* Без скруглений */
+            border-radius: 0;
         }
 
         h1 {
-            color: #fb4d35; /* Фирменный коралловый цвет */
+            color: #fb4d35;
             margin-bottom: 30px;
             font-weight: 700;
         }
 
         .links-section {
             display: flex;
-            flex-direction: column; /* Ссылки в столбик */
-            gap: 20px; /* Расстояние между ссылками */
+            flex-direction: column;
+            gap: 20px;
             margin-top: 30px;
         }
 
         .lk-link {
             display: block;
             padding: 15px 25px;
-            background-color: #fb4d35; /* Фирменный коралловый цвет */
+            background-color: #fb4d35;
             color: white;
             text-decoration: none;
             font-size: 18px;
             font-weight: 700;
             transition: background-color 0.3s ease;
-            border-radius: 0; /* Без скруглений */
+            border-radius: 0;
             text-align: center;
         }
 
         .lk-link:hover {
-            background-color: #e5462e; /* Более тёмный оттенок при наведении */
+            background-color: #e5462e;
         }
-        
+
         .logout-button {
             margin-top: 40px;
             background: none;
@@ -79,7 +79,6 @@
             opacity: 0.8;
         }
 
-        /* Медиа-запросы для мобильных устройств (можно настроить точнее) */
         @media (max-width: 768px) {
             .lk-container {
                 padding: 20px;
@@ -102,7 +101,8 @@
         
         <div class="links-section">
             <a href="#" class="lk-link">Ознакомительный раздел</a>
-            <a href="https://pro-culinaria-lk.proculinaria-book.ru/content.html" class="lk-link">Читальный зал Библиотеки</a>
+
+            <a href="#" class="lk-link" onclick="checkAndRedirect(); return false;">Читальный зал Библиотеки</a>
         </div>
         
         <button class="logout-button" id="logoutButton">Выйти из кабинета</button>
@@ -113,19 +113,43 @@
         window.onload = function() {
             const user = localStorage.getItem('user');
             if (!user) {
-                // Если пользователь не авторизован, перенаправляем на страницу входа
                 window.location.href = 'https://pro-culinaria-lk.proculinaria-book.ru';
             }
-            // Здесь можно добавить логику для отображения имени пользователя или других данных
-            // const userData = JSON.parse(user);
-            // document.querySelector('h1').textContent = `Добро пожаловать, ${userData.name}!`;
         };
 
         // Обработчик кнопки "Выйти"
         document.getElementById('logoutButton').addEventListener('click', function() {
-            localStorage.removeItem('user'); // Удаляем данные пользователя из localStorage
-            window.location.href = 'https://pro-culinaria-lk.proculinaria-book.ru'; // Перенаправляем на страницу входа
+            localStorage.removeItem('user');
+            window.location.href = 'https://pro-culinaria-lk.proculinaria-book.ru';
         });
+
+        // Ваша рабочая функция для проверки доступа
+        const checkAndRedirect = async () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            
+            if (!user || !user.email) {
+                alert('Ошибка: Данные пользователя не найдены. Пожалуйста, попробуйте войти снова.');
+                window.location.href = '/';
+                return;
+            }
+
+            try {
+                const response = await fetch('/.netlify/functions/get-content?action=check-access', {
+                    headers: { 'X-User-Email': user.email }
+                });
+
+                if (response.ok) {
+                    window.location.href = 'https://pro-culinaria-library.netlify.app/';
+                } else {
+                    const errorMessage = await response.text();
+                    alert(`Ошибка: ${errorMessage}`);
+                }
+
+            } catch (e) {
+                console.error('Ошибка:', e);
+                alert('Произошла ошибка при получении доступа к материалам. Пожалуйста, попробуйте позже.');
+            }
+        };
     </script>
 </body>
 </html>
