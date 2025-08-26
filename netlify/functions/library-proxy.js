@@ -58,7 +58,7 @@ exports.handler = async (event) => {
     const { action, page, token } = event.queryStringParameters;
 
     const tildaPages = {
-        'chitalnyizal': '74377421', // Замените на реальные ID страниц
+        'chitalnyizal': '62118987',
         'new-book': '74377422'
     };
 
