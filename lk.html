@@ -1,27 +1,40 @@
-const user = JSON.parse(localStorage.getItem('user'));
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Личный кабинет</title>
+</head>
+<body>
+    <a href="#" onclick="goToPage('chitalnyizal'); return false;">Читальный зал</a>
 
-const goToPage = async (pageName) => {
-    try {
-        // Шаг 1: Запрашиваем токен у нашей единой функции
-        const generateUrl = `/.netlify/functions/library-proxy?action=generate&page=${pageName}`;
-        const response = await fetch(generateUrl, {
-            headers: { 'X-User-Email': user.email }
-        });
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'));
 
-        if (!response.ok) {
-            const errorMessage = await response.text();
-            alert(`Ошибка: ${errorMessage}`);
-            return;
-        }
+        const goToPage = async (pageName) => {
+            try {
+                // Шаг 1: Запрашиваем токен у нашей единой функции
+                const generateUrl = `/.netlify/functions/library-proxy?action=generate&page=${pageName}`;
+                const response = await fetch(generateUrl, {
+                    headers: { 'X-User-Email': user.email }
+                });
 
-        const data = await response.json();
-        const token = data.token;
+                if (!response.ok) {
+                    const errorMessage = await response.text();
+                    alert(`Ошибка: ${errorMessage}`);
+                    return;
+                }
 
-        // Шаг 2: Перенаправляем на ту же функцию, чтобы она вернула нам контент
-        window.location.href = `/.netlify/functions/library-proxy?action=proxy&token=${encodeURIComponent(token)}`;
+                const data = await response.json();
+                const token = data.token;
 
-    } catch (e) {
-        console.error(e);
-        alert('Ошибка перехода на страницу.');
-    }
-};
+                // Шаг 2: Перенаправляем на ту же функцию, чтобы она вернула нам контент
+                window.location.href = `/.netlify/functions/library-proxy?action=proxy&token=${encodeURIComponent(token)}`;
+
+            } catch (e) {
+                console.error(e);
+                alert('Ошибка перехода на страницу.');
+            }
+        };
+    </script>
+</body>
+</html>
