@@ -2,11 +2,47 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Тест Iframe</title>
+    <title>Личный кабинет</title>
 </head>
 <body>
-    <h1>Тест встраивания вашей страницы</h1>
-    <iframe src="https://pro-culinaria.ru/chitalnyizal" width="100%" height="600" style="border:0;"></iframe>
-    <p>Если вы видите страницу "Читальный зал" выше, значит, встраивание работает.</p>
+    <a href="#" onclick="goToLibrary(); return false;">Читальный зал</a>
+
+    <script>
+        const goToLibrary = async () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            
+            if (!user || !user.email) {
+                alert('Ошибка: Данные пользователя не найдены. Пожалуйста, попробуйте войти снова.');
+                window.location.href = '/';
+                return;
+            }
+
+            try {
+                const response = await fetch('/.netlify/functions/library-proxy', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-User-Email': user.email
+                    },
+                    body: JSON.stringify({ page: 'chitalnyizal' })
+                });
+
+                if (!response.ok) {
+                    const errorMessage = await response.text();
+                    alert(`Ошибка: ${errorMessage}`);
+                    return;
+                }
+
+                const data = await response.json();
+                const redirectUrl = data.url;
+
+                window.location.href = redirectUrl;
+
+            } catch (e) {
+                console.error(e);
+                alert('Ошибка перехода на страницу.');
+            }
+        };
+    </script>
 </body>
 </html>
