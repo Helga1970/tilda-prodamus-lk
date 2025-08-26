@@ -5,6 +5,32 @@
     <title>Личный кабинет</title>
 </head>
 <body>
-    <a href="https://pro-culinaria-library.netlify.app">Читальный зал</a>
+    <a href="#" onclick="getMaterialsUrl(); return false;">Читальный зал</a>
+
+    <script>
+        const getMaterialsUrl = async () => {
+            try {
+                // Здесь мы просто запрашиваем URL, не передавая никакой информации о пользователе
+                // Предполагаем, что доступ уже проверен на странице входа
+                const response = await fetch('/.netlify/functions/get-materials-url');
+
+                if (!response.ok) {
+                    const errorMessage = await response.text();
+                    alert(`Ошибка: ${errorMessage}`);
+                    return;
+                }
+
+                const data = await response.json();
+                const redirectUrl = data.url;
+
+                // Перенаправляем пользователя на сгенерированный URL
+                window.location.href = redirectUrl;
+
+            } catch (e) {
+                console.error('Ошибка:', e);
+                alert('Произошла ошибка при получении доступа к материалам.');
+            }
+        };
+    </script>
 </body>
 </html>
