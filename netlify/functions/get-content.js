@@ -56,52 +56,56 @@ const getTildaContent = async (pageId) => {
 
 exports.handler = async (event) => {
     const { action, page, token } = event.queryStringParameters;
+    const userEmail = event.headers['x-user-email'];
 
     const tildaPages = {
         'chitalnyizal': '74377421', // Замените на реальные ID страниц
         'new-book': '74377422'
     };
 
-    // Служебная проверка, если кто-то пытается получить доступ к API без action
     if (!action) {
         return { statusCode: 400, body: 'Неверный запрос. Укажите action.' };
     }
 
+    // Проверка подписки для всех actions, кроме proxy (там токен уже проверен)
+    if (action !== 'proxy') {
+        if (!userEmail) {
+            return { statusCode: 401, body: 'Не авторизован.' };
+        }
+        const hasAccess = await checkSubscription(userEmail);
+        if (!hasAccess) {
+            return { statusCode: 403, body: 'Доступ запрещён. Ваша подписка истекла.' };
+        }
+    }
+
     switch (action) {
+        // Новый action для получения URL страницы с iframe
+        case 'get-url':
+            const materialsPageUrl = 'https://pro-culinaria-library.netlify.app/';
+            return {
+                statusCode: 200,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: materialsPageUrl })
+            };
+
+        // Ваша существующая логика generate
         case 'generate':
-            const userEmail = event.headers['x-user-email'];
-
-            if (!userEmail) {
-                return { statusCode: 401, body: 'Не авторизован.' };
-            }
-
-            const hasAccess = await checkSubscription(userEmail);
-            if (!hasAccess) {
-                return { statusCode: 403, body: 'Доступ запрещён. Ваша подписка истекла.' };
-            }
-
             const tildaPageId = tildaPages[page];
             if (!tildaPageId) {
                 return { statusCode: 404, body: 'Страница не найдена.' };
             }
-
             const client = new Client({ connectionString: process.env.NEON_DB_URL });
             try {
                 await client.connect();
-
-                // Генерация и сохранение токена в базе данных
                 const newToken = crypto.randomBytes(16).toString('hex');
                 const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-                
                 const insertQuery = 'INSERT INTO tokens (token, page_id, expires_at) VALUES ($1, $2, $3)';
                 await client.query(insertQuery, [newToken, tildaPageId, expiresAt]);
-
                 return {
                     statusCode: 200,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ token: newToken })
                 };
-
             } catch (error) {
                 console.error('Ошибка при генерации токена:', error);
                 return { statusCode: 500, body: 'Ошибка сервера.' };
@@ -109,32 +113,24 @@ exports.handler = async (event) => {
                 await client.end();
             }
 
+        // Ваша существующая логика proxy
         case 'proxy':
             if (!token) {
                 return { statusCode: 400, body: 'Токен не указан.' };
             }
-            
             const dbClient = new Client({ connectionString: process.env.NEON_DB_URL });
             try {
                 await dbClient.connect();
-
                 const lookupQuery = 'SELECT page_id FROM tokens WHERE token = $1 AND expires_at >= NOW()';
                 const result = await dbClient.query(lookupQuery, [token]);
-
                 if (result.rows.length === 0) {
                     return { statusCode: 403, body: 'Недействительный или просроченный токен.' };
                 }
-
                 const pageId = result.rows[0].page_id;
-                
-                // Удаляем токен после первого использования для дополнительной безопасности
                 const deleteQuery = 'DELETE FROM tokens WHERE token = $1';
                 await dbClient.query(deleteQuery, [token]);
-
-                // Получаем и возвращаем контент с Tilda
                 const tildaResponse = await getTildaContent(pageId);
                 return tildaResponse;
-
             } catch (error) {
                 console.error('Ошибка при использовании токена:', error);
                 return { statusCode: 500, body: 'Ошибка сервера.' };
