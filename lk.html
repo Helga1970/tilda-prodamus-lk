@@ -5,6 +5,39 @@
     <title>Личный кабинет</title>
 </head>
 <body>
-    <a href="https://pro-culinaria-library.netlify.app/">Читальный зал</a>
+    <a href="#" onclick="checkAndRedirect(); return false;">Читальный зал</a>
+
+    <script>
+        const checkAndRedirect = async () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            
+            // 1. Проверяем, есть ли данные пользователя
+            if (!user || !user.email) {
+                alert('Ошибка: Данные пользователя не найдены. Пожалуйста, попробуйте войти снова.');
+                window.location.href = '/';
+                return;
+            }
+
+            try {
+                // 2. Делаем запрос к нашей функции для проверки подписки
+                const response = await fetch('/.netlify/functions/get-content?action=check-access', {
+                    headers: { 'X-User-Email': user.email } // Передаем email пользователя для проверки
+                });
+
+                // 3. Если подписка активна (статус 200), перенаправляем на сайт с iframe
+                if (response.ok) {
+                    window.location.href = 'https://pro-culinaria-library.netlify.app/';
+                } else {
+                    // 4. Если подписка неактивна (статус не 200), показываем ошибку
+                    const errorMessage = await response.text();
+                    alert(`Ошибка: ${errorMessage}`);
+                }
+
+            } catch (e) {
+                console.error('Ошибка:', e);
+                alert('Произошла ошибка при получении доступа к материалам. Пожалуйста, попробуйте позже.');
+            }
+        };
+    </script>
 </body>
 </html>
