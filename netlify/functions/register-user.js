@@ -1,6 +1,7 @@
-const { Client } = require('pg');
-const bcrypt = require('bcryptjs');
+const { URLSearchParams } = require('url');
+const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const { Client } = require('pg');
 
 exports.handler = async (event) => {
     const headers = {
@@ -17,97 +18,169 @@ exports.handler = async (event) => {
         };
     }
 
+    const client = new Client({
+        connectionString: process.env.NEON_DB_URL,
+    });
+
     try {
-        if (event.httpMethod !== 'POST' || !event.body) {
-            return {
-                statusCode: 400,
-                headers: headers,
-                body: JSON.stringify({ error: 'Invalid request' })
-            };
-        }
-
-        const { name, email, password } = JSON.parse(event.body);
-
-        if (!name || !email || !password) {
-            return {
-                statusCode: 400,
-                headers: headers,
-                body: JSON.stringify({ error: 'Name, e-mail, and password are required' })
-            };
-        }
-
-        const client = new Client({
-            connectionString: process.env.NEON_DB_URL,
-        });
-
         await client.connect();
 
-        const userExistsQuery = 'SELECT COUNT(*) FROM users WHERE email = $1';
-        const userExistsResult = await client.query(userExistsQuery, [email]);
-        if (userExistsResult.rows[0].count > 0) {
-            await client.end();
+        let payload;
+        try {
+            if (event.headers['content-type'] && event.headers['content-type'].includes('application/x-www-form-urlencoded')) {
+                const params = new URLSearchParams(event.body);
+                payload = Object.fromEntries(params.entries());
+            } else {
+                payload = JSON.parse(event.body);
+            }
+        } catch (e) {
             return {
-                statusCode: 409,
+                statusCode: 400,
                 headers: headers,
-                body: JSON.stringify({ error: 'Пользователь с таким e-mail уже зарегистрирован' })
+                body: JSON.stringify({ message: "Invalid request body format." }),
             };
         }
 
-        // Хэширование пароля перед сохранением
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-        const accessEndDate = new Date();
-        accessEndDate.setDate(accessEndDate.getDate() - 1);
+        // Логика для входа пользователя
+        if (payload.email && payload.password && !payload.payment_status) {
+            const { email, password } = payload;
+            const query = 'SELECT * FROM users WHERE email = $1 AND password = $2';
+            const res = await client.query(query, [email, password]);
 
-        const insertUserQuery = 'INSERT INTO users (name, email, password, access_end_date) VALUES ($1, $2, $3, $4) RETURNING id';
-        await client.query(insertUserQuery, [name, email, hashedPassword, accessEndDate.toISOString()]);
-        
-        // Отправка письма пользователю
-        const transporter = nodemailer.createTransport({
-            service: 'gmail', // Вы можете использовать другой сервис (например, SendGrid, Mailgun)
-            auth: {
-                user: process.env.EMAIL_USER, // Ваша почта
-                pass: process.env.EMAIL_PASS  // Ваш пароль или App Password
+            if (res.rows.length > 0) {
+                return {
+                    statusCode: 200,
+                    headers: headers,
+                    body: JSON.stringify({
+                        message: "Успешная авторизация",
+                        user: res.rows[0],
+                    }),
+                };
+            } else {
+                return {
+                    statusCode: 401,
+                    headers: headers,
+                    body: JSON.stringify({
+                        message: "Неверный email или пароль",
+                    }),
+                };
             }
-        });
+        }
 
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: 'Регистрация на сайте Pro-Culinaria',
-            html: `
-                <p>Здравствуйте, ${name}!</p>
-                <p>Вы успешно зарегистрировались на сайте Pro-Culinaria.</p>
-                <p>Ваши данные для входа:</p>
-                <ul>
-                    <li>**E-mail:** ${email}</li>
-                    <li>**Пароль:** ${password}</li>
-                </ul>
-                <p>Вы можете войти в свой личный кабинет по этой ссылке: <a href="https://pro-culinaria-lk.proculinaria-book.ru">Войти</a></p>
-                <p>С уважением,<br>Команда Pro-Culinaria</p>
-            `
-        };
+        // Логика для регистрации/оплаты
+        const customerEmail = payload.customer_email || payload.email;
+        const customerName = payload.name || (payload.order_num ? payload.order_num : 'Клиент');
+        const password = payload.password || crypto.randomBytes(4).toString('hex');
+        let accessDays;
+        let subscriptionType;
 
-        try {
+        if (payload.payment_status === 'success') {
+            const paymentSum = parseFloat(payload.sum);
+            if (paymentSum === 350.00) {
+                accessDays = 30;
+                subscriptionType = '30_days';
+            } else if (paymentSum === 3000.00) {
+                accessDays = 365;
+                subscriptionType = '365_days';
+            } else {
+                return {
+                    statusCode: 200,
+                    headers: headers,
+                    body: JSON.stringify({ message: "Unknown payment amount." }),
+                };
+            }
+        } else if (payload.password) {
+            // Регистрация через форму
+            accessDays = -1; // Доступ по умолчанию "закрыт"
+            subscriptionType = 'free';
+        } else {
+            return {
+                statusCode: 400,
+                headers: headers,
+                body: JSON.stringify({ message: "Invalid request data." }),
+            };
+        }
+
+        if (!customerEmail) {
+            return {
+                statusCode: 400,
+                headers: headers,
+                body: JSON.stringify({ message: "Missing customer email." }),
+            };
+        }
+
+        const userResult = await client.query('SELECT * FROM users WHERE email = $1', [customerEmail]);
+
+        if (userResult.rows.length > 0) {
+            const existingUser = userResult.rows[0];
+            const currentEndDate = new Date(existingUser.access_end_date);
+            let newEndDate;
+
+            if (payload.payment_status === 'success') {
+                if (currentEndDate > new Date()) {
+                    newEndDate = new Date(currentEndDate.setDate(currentEndDate.getDate() + accessDays));
+                } else {
+                    newEndDate = new Date();
+                    newEndDate.setDate(newEndDate.getDate() + accessDays);
+                }
+
+                const updateQuery = 'UPDATE users SET subscription_type = $1, access_end_date = $2 WHERE email = $3';
+                const updateValues = [subscriptionType, newEndDate.toISOString(), customerEmail];
+                await client.query(updateQuery, updateValues);
+            }
+        } else {
+            const accessEndDate = new Date();
+            accessEndDate.setDate(accessEndDate.getDate() + accessDays);
+            const insertQuery = 'INSERT INTO users (email, password, name, subscription_type, access_end_date) VALUES ($1, $2, $3, $4, $5) RETURNING *';
+            const insertValues = [customerEmail, password, customerName, subscriptionType, accessEndDate.toISOString()];
+            await client.query(insertQuery, insertValues);
+
+            const transporter = nodemailer.createTransport({
+                host: 'in-v3.mailjet.com',
+                port: 465, // Рекомендуемый порт для SSL
+                secure: true,
+                auth: {
+                    user: process.env.MAILJET_API_KEY,
+                    pass: process.env.MAILJET_SECRET_KEY
+                }
+            });
+
+            const mailOptions = {
+                from: process.env.EMAIL_SENDER,
+                to: customerEmail,
+                subject: 'Регистрация на сайте Pro-Culinaria',
+                html: `
+                    <p>Здравствуйте, ${customerName}!</p>
+                    <p>Вы успешно зарегистрировались на сайте Pro-Culinaria.</p>
+                    <p>Ваши данные для входа:</p>
+                    <ul>
+                        <li>**Email:** ${customerEmail}</li>
+                        <li>**Пароль:** ${password}</li>
+                    </ul>
+                    <p>Вы можете войти в свой личный кабинет по этой ссылке: <a href="https://pro-culinaria-lk.proculinaria-book.ru">Войти</a></p>
+                    <p>С уважением,<br>Команда Pro-Culinaria</p>
+                `,
+            };
             await transporter.sendMail(mailOptions);
-            console.log('Email sent successfully!');
-        } catch (emailError) {
-            console.error('Error sending email:', emailError);
-        } finally {
-            await client.end();
         }
 
         return {
             statusCode: 200,
             headers: headers,
-            body: JSON.stringify({ message: 'Регистрация прошла успешно! Проверьте свой e-mail для входа.' })
+            body: JSON.stringify({ message: "Success." }),
         };
-    } catch (error) {
-        console.error('Ошибка при регистрации пользователя:', error);
+    } catch (err) {
+        console.error('Ошибка в обработчике:', err);
         return {
             statusCode: 500,
             headers: headers,
-            body: JSON.stringify({ error: 'Произошла ошибка сервера при регистрации' })
+            body: JSON.stringify({
+                message: "Ошибка сервера: " + err.message,
+            }),
         };
+    } finally {
+        if (client) {
+            await client.end();
+        }
     }
 };
