@@ -82,28 +82,28 @@ exports.handler = async (event) => {
             }
             const hasAccess = await checkSubscription(userEmailFromHeader);
             if (!hasAccess) {
-                return { statusCode: 403, body: 'Доступ запрещён. Ваша подписка истекла.' };
+                const errorBody = 'Доступ запрещён. Ваша подписка истекла. Для оплаты подписки перейдите по ссылке: https://pro-culinaria.ru/aboutplatej';
+                return { 
+                    statusCode: 403,
+                    body: errorBody
+                };
             }
             return { statusCode: 200, body: 'Доступ разрешен.' };
 
         // Случай 1: Генерация одноразового токена.
         case 'generate':
             const userEmail = event.headers['x-user-email'];
-
             if (!userEmail) {
                 return { statusCode: 401, body: 'Не авторизован.' };
             }
-
             const hasAccessGenerate = await checkSubscription(userEmail);
             if (!hasAccessGenerate) {
                 return { statusCode: 403, body: 'Доступ запрещён. Ваша подписка истекла.' };
             }
-
             const tildaPageId = tildaPages[page];
             if (!tildaPageId) {
                 return { statusCode: 404, body: 'Страница не найдена.' };
             }
-
             const client = new Client({ connectionString: process.env.NEON_DB_URL });
             try {
                 await client.connect();
@@ -118,7 +118,6 @@ exports.handler = async (event) => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ token: newToken })
                 };
-
             } catch (error) {
                 console.error('Ошибка при генерации токена:', error);
                 return { statusCode: 500, body: 'Ошибка сервера.' };
@@ -135,22 +134,16 @@ exports.handler = async (event) => {
             const dbClient = new Client({ connectionString: process.env.NEON_DB_URL });
             try {
                 await dbClient.connect();
-
                 const lookupQuery = 'SELECT page_id FROM tokens WHERE token = $1 AND expires_at >= NOW()';
                 const result = await dbClient.query(lookupQuery, [token]);
-
                 if (result.rows.length === 0) {
                     return { statusCode: 403, body: 'Недействительный или просроченный токен.' };
                 }
-
                 const pageId = result.rows[0].page_id;
-                
                 const deleteQuery = 'DELETE FROM tokens WHERE token = $1';
                 await dbClient.query(deleteQuery, [token]);
-
                 const tildaResponse = await getTildaContent(pageId);
                 return tildaResponse;
-
             } catch (error) {
                 console.error('Ошибка при использовании токена:', error);
                 return { statusCode: 500, body: 'Ошибка сервера.' };
