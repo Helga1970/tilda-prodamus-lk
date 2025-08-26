@@ -63,13 +63,19 @@ const handleProdamusWebhook = async (client, payload) => {
                 pass: '98289e767513278bd19fc129544da3b6'
             }
         });
+
+        // Форматируем дату окончания доступа
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() + accessDays);
+        const formattedEndDate = endDate.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
         const mailOptions = {
             from: 'mail@proculinaria.ru',
             to: customerEmail,
             subject: 'Доступ к Личному кабинету',
             html: `
             <h2>Здравствуйте, ${customerName}!</h2>
-            <p>Благодарим за оплату. Ваш доступ к материалам открыт на **${accessDays}** дней.</p>
+            <p>Благодарим за оплату. Ваш доступ к материалам открыт на **${accessDays}** дней, до ${formattedEndDate} включительно.</p>
             <p>Ваши данные для входа в Личный кабинет:</p>
             <ul>
                 <li>**Email:** ${customerEmail}</li>
@@ -139,7 +145,7 @@ exports.handler = async (event) => {
             };
         }
     } catch (err) {
-        console.error('Ошибка в обработчике:', err.message);
+        console.error('Ошибка при авторизации:', err.message);
         return {
             statusCode: 500,
             body: JSON.stringify({
