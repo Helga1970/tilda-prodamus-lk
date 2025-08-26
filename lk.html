@@ -5,42 +5,6 @@
     <title>Личный кабинет</title>
 </head>
 <body>
-    <a href="#" onclick="getMaterialsUrl(); return false;">Читальный зал</a>
-
-    <script>
-        const getMaterialsUrl = async () => {
-            const user = JSON.parse(localStorage.getItem('user'));
-            
-            // Проверяем авторизацию пользователя
-            if (!user || !user.email) {
-                alert('Ошибка: Данные пользователя не найдены. Пожалуйста, попробуйте войти снова.');
-                window.location.href = '/';
-                return;
-            }
-
-            try {
-                // Делаем запрос к нашей функции для получения защищенного URL
-                const response = await fetch('/.netlify/functions/get-content?action=get-url', {
-                    headers: { 'X-User-Email': user.email } // Передаем email пользователя
-                });
-
-                if (!response.ok) {
-                    const errorMessage = await response.text();
-                    alert(`Ошибка: ${errorMessage}`);
-                    return;
-                }
-
-                const data = await response.json();
-                const redirectUrl = data.url;
-
-                // Перенаправляем пользователя на сгенерированный URL
-                window.location.href = redirectUrl;
-
-            } catch (e) {
-                console.error('Ошибка:', e);
-                alert('Произошла ошибка при получении доступа к материалам.');
-            }
-        };
-    </script>
+    <a href="https://pro-culinaria-library.netlify.app/">Читальный зал</a>
 </body>
 </html>
