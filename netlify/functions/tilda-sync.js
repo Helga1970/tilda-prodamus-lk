@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { Octokit } = require('@octokit/rest');
 
 exports.handler = async (event) => {
     try {
@@ -36,14 +37,42 @@ exports.handler = async (event) => {
             url: pageData.url
         });
 
-        // Отвечаем Тильде успехом
+        // === GitHub commit ===
+        const octokit = new Octokit({
+            auth: process.env.GITHUB_TOKEN, // создаём Personal Access Token на GitHub
+        });
+
+        const owner = "Helga1970";
+        const repo = "tilda-prodamus-lk";
+        // сохраним в public/{url}/index.html (например: public/chitalnyj-zal/index.html)
+        const path = `public/${pageData.alias || pageData.url || 'page-' + pageId}/index.html`;
+
+        // Проверяем, есть ли файл
+        let sha;
+        try {
+            const { data } = await octokit.repos.getContent({ owner, repo, path });
+            sha = data.sha;
+        } catch (err) {
+            sha = undefined; // файла нет — создадим новый
+        }
+
+        // Делаем коммит
+        await octokit.repos.createOrUpdateFileContents({
+            owner,
+            repo,
+            path,
+            message: `Update from Tilda page ${pageId} (${pageData.title})`,
+            content: Buffer.from(pageHtml).toString("base64"),
+            sha,
+        });
+
         return {
             statusCode: 200,
-            body: `Page ${pageId} synced successfully`
+            body: `✅ Page ${pageId} synced and pushed to GitHub (${path})`
         };
 
     } catch (error) {
         console.error("❌ Webhook error:", error);
-        return { statusCode: 500, body: "Webhook error" };
+        return { statusCode: 500, body: "Webhook error: " + error.message };
     }
 };
