@@ -1,24 +1,27 @@
-<a href="#" onclick="goToPage('chitalnyizal'); return false;">Читальный зал</a>
-
-<script>
 const user = JSON.parse(localStorage.getItem('user'));
 
 const goToPage = async (pageName) => {
-    try {
-        const response = await fetch(`/api/get-content?page=${pageName}`, {
-            headers: { 'X-User-Email': user.email }
-        });
+    try {
+        // Шаг 1: Запрашиваем токен у нашей единой функции
+        const generateUrl = `/.netlify/functions/library-proxy?action=generate&page=${pageName}`;
+        const response = await fetch(generateUrl, {
+            headers: { 'X-User-Email': user.email }
+        });
 
-        if (!response.ok) {
-            alert(await response.text());
-            return;
-        }
+        if (!response.ok) {
+            const errorMessage = await response.text();
+            alert(`Ошибка: ${errorMessage}`);
+            return;
+        }
 
-        const data = await response.json();
-        // Переход на функцию redirect через /api
-        window.location.href = `/api/redirect?token=${encodeURIComponent(data.token)}`;
-    } catch (e) {
-        alert('Ошибка перехода на страницу.');
-    }
+        const data = await response.json();
+        const token = data.token;
+
+        // Шаг 2: Перенаправляем на ту же функцию, чтобы она вернула нам контент
+        window.location.href = `/.netlify/functions/library-proxy?action=proxy&token=${encodeURIComponent(token)}`;
+
+    } catch (e) {
+        console.error(e);
+        alert('Ошибка перехода на страницу.');
+    }
 };
-</script>
