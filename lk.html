@@ -78,28 +78,7 @@
         .logout-button:hover {
             opacity: 0.8;
         }
-        
-        /* Дополнительный стиль для текста внутри второй плашки */
-        .library-access-info {
-            font-size: 12px;
-            font-weight: 400; /* Не жирный */
-            color: white;
-            margin-top: 5px; /* Отступ от основной надписи */
-        }
-        
-        /* Изменение для вертикального выравнивания контента внутри плашки */
-        .lk-link.with-info {
-            padding: 10px 25px; /* Уменьшаем padding, чтобы уместить две строки */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        .lk-link.with-info span {
-            font-size: 18px;
-            font-weight: 700;
-        }
-        
+
         @media (max-width: 768px) {
             .lk-container {
                 padding: 20px;
@@ -113,12 +92,6 @@
                 font-size: 16px;
                 padding: 12px 20px;
             }
-            .lk-link.with-info span {
-                font-size: 16px;
-            }
-            .library-access-info {
-                font-size: 10px;
-            }
         }
     </style>
 </head>
@@ -129,10 +102,7 @@
         <div class="links-section">
             <a href="#" class="lk-link">Ознакомительный раздел</a>
 
-            <a href="#" class="lk-link with-info" onclick="checkAndRedirect(); return false;">
-                <span>Читальный зал Библиотеки</span>
-                <span class="library-access-info">для доступа требуется действующая подписка</span>
-            </a>
+            <a href="#" class="lk-link" onclick="checkAndRedirect(); return false;">Читальный зал Библиотеки</a>
         </div>
         
         <button class="logout-button" id="logoutButton">Выйти из кабинета</button>
@@ -169,7 +139,7 @@
                 });
 
                 if (response.ok) {
-                    window.location.href = 'https://pro-culinaria-library.proculinaria-book.ru';
+                    window.location.href = 'https://pro-culinaria-library.netlify.app/';
                 } else {
                     const errorMessage = await response.text();
                     alert(`Ошибка: ${errorMessage}`);
