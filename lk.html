@@ -15,7 +15,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-image: url('https://raw.githubusercontent.com/Helga1970/tilda-prodamus-lk/main/a7f3dec3-aa46-42ce-a500-d40abb995b63.png');
+            background-image: url('./a7f3dec3-aa46-42ce-a500-d40abb995b63.png');
             background-size: cover;
             background-position: center center;
             background-repeat: no-repeat;
@@ -58,10 +58,23 @@
             transition: background-color 0.3s ease;
             border-radius: 0;
             text-align: center;
+            min-height: 70px; /* одинаковая высота */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .lk-link:hover {
             background-color: #e5462e;
+        }
+
+        .lk-subtext {
+            font-size: 12px;
+            font-weight: normal;
+            margin-top: 5px;
+            line-height: 1.2;
+            color: #fff;
+            opacity: 0.9;
         }
 
         .logout-button {
@@ -92,6 +105,9 @@
                 font-size: 16px;
                 padding: 12px 20px;
             }
+            .lk-subtext {
+                font-size: 11px;
+            }
         }
     </style>
 </head>
@@ -102,7 +118,10 @@
         <div class="links-section">
             <a href="#" class="lk-link">Ознакомительный раздел</a>
 
-            <a href="#" class="lk-link" onclick="checkAndRedirect(); return false;">Читальный зал Библиотеки</a>
+            <a href="#" class="lk-link" onclick="checkAndRedirect(); return false;">
+                Читальный зал Библиотеки
+                <span class="lk-subtext">для доступа требуется действующая подписка</span>
+            </a>
         </div>
         
         <button class="logout-button" id="logoutButton">Выйти из кабинета</button>
