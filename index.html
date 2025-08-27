@@ -19,7 +19,7 @@
         .login-box {
             background-color: #fff;
             padding: 40px;
-            border-radius: 0;
+            border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             text-align: center;
             width: 100%;
@@ -44,7 +44,7 @@
             width: 100%;
             padding: 12px;
             border: 1px solid #ccc;
-            border-radius: 0;
+            border-radius: 5px;
             box-sizing: border-box;
             font-family: inherit;
         }
@@ -72,7 +72,7 @@
             background-color: #fb4d35;
             color: #fff;
             border: none;
-            border-radius: 0;
+            border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
             transition: background-color 0.3s;
@@ -103,7 +103,6 @@
 <body>
     <div class="login-box">
         <h2 id="form-title">Вход в личный кабинет</h2>
-        
         <form id="loginForm">
             <div class="input-group">
                 <label for="email">Email</label>
@@ -118,7 +117,7 @@
             </div>
             <button type="submit" class="login-button">Войти</button>
         </form>
-        
+
         <form id="resetPasswordForm" style="display: none;">
             <div class="input-group">
                 <label for="reset-email">e-mail:</label>
@@ -126,16 +125,14 @@
             </div>
             <button type="submit" class="login-button">Восстановить пароль</button>
         </form>
-        
+
         <p id="message"></p>
-        
         <div class="form-links">
-            <p id="reg-link-container"><a href="https://pro-culinaria.ru/registration">Зарегистрироваться</a></p>
+            <p><a href="ПУТЬ_К_ВАШЕЙ_СТРАНИЦЕ_РЕГИСТРАЦИИ">Зарегистрироваться</a></p>
             <p id="reset-link-container"><a href="#" onclick="showForm('reset')">Восстановить пароль</a></p>
             <p id="login-link-container" style="display: none;"><a href="#" onclick="showForm('login')">Вернуться к входу</a></p>
         </div>
     </div>
-    
     <script>
         function togglePassword() {
             const passwordField = document.getElementById('password');
@@ -145,6 +142,7 @@
             passwordToggleButton.textContent = (type === 'password') ? 'Показать' : 'Скрыть';
         }
 
+        // НОВАЯ ФУНКЦИЯ ДЛЯ ПЕРЕКЛЮЧЕНИЯ ФОРМ
         function showForm(formType) {
             const loginForm = document.getElementById('loginForm');
             const resetForm = document.getElementById('resetPasswordForm');
@@ -154,7 +152,7 @@
             const loginLink = document.getElementById('login-link-container');
             const messageElement = document.getElementById('message');
 
-            messageElement.textContent = ''; // Очищаем сообщение при переключении форм
+            messageElement.textContent = ''; // Очистка сообщения при переключении форм
 
             if (formType === 'login') {
                 loginForm.style.display = 'block';
@@ -172,15 +170,14 @@
                 loginLink.style.display = 'block';
             }
         }
-        
-        // Обработчик отправки формы входа (ВАШ ОРИГИНАЛЬНЫЙ КОД)
+
         const loginForm = document.getElementById('loginForm');
         loginForm.addEventListener('submit', async function(event) {
             event.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const messageElement = document.getElementById('message');
-            const loginUrl = 'https://pro-culinaria-lk.proculinaria-book.ru/.netlify/functions/login';
+            const loginUrl = '/api/prodamus-webhook';
 
             try {
                 const response = await fetch(loginUrl, {
@@ -195,51 +192,13 @@
 
                 if (response.ok) {
                     localStorage.setItem('user', JSON.stringify(data.user));
-                    window.location.href = '/lk.html';
+                    window.location.href = 'lk.html';
                 } else {
                     messageElement.textContent = data.message || 'Неверный email или пароль';
-                    messageElement.style.color = 'red';
                 }
             } catch (error) {
                 console.error('Ошибка при авторизации:', error);
                 messageElement.textContent = 'Произошла ошибка при попытке входа. Пожалуйста, попробуйте позже.';
-                messageElement.style.color = 'red';
-            }
-        });
-        
-        // Обработчик отправки формы восстановления пароля (ДОБАВЛЕННЫЙ КОД)
-        const resetPasswordForm = document.getElementById('resetPasswordForm');
-        resetPasswordForm.addEventListener('submit', async function(event) {
-            event.preventDefault();
-
-            const email = document.getElementById('reset-email').value;
-            const messageElement = document.getElementById('message');
-            
-            messageElement.textContent = 'Обработка...';
-            messageElement.style.color = '#333';
-
-            try {
-                const response = await fetch('https://pro-culinaria-lk.proculinaria-book.ru/.netlify/functions/reset-password', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email })
-                });
-
-                const result = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(result.error || `Server returned error: ${response.status} - ${response.statusText}`);
-                }
-                
-                messageElement.style.color = 'green';
-                messageElement.innerHTML = result.message || 'Ссылка для восстановления отправлена на ваш e-mail.';
-                
-            } catch (e) {
-                console.error('Ошибка:', e);
-                messageElement.textContent = e.message || 'Произошла ошибка при восстановлении пароля. Пожалуйста, попробуйте позже.';
-                messageElement.style.color = 'red';
             }
         });
     </script>
