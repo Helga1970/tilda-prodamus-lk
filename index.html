@@ -102,7 +102,8 @@
 </head>
 <body>
     <div class="login-box">
-        <h2>Вход в личный кабинет</h2>
+        <h2 id="form-title">Вход в личный кабинет</h2>
+        
         <form id="loginForm">
             <div class="input-group">
                 <label for="email">Email</label>
@@ -117,12 +118,24 @@
             </div>
             <button type="submit" class="login-button">Войти</button>
         </form>
+        
+        <form id="resetPasswordForm" style="display: none;">
+            <div class="input-group">
+                <label for="reset-email">e-mail:</label>
+                <input type="email" id="reset-email" name="email" required>
+            </div>
+            <button type="submit" class="login-button">Восстановить пароль</button>
+        </form>
+        
         <p id="message"></p>
+        
         <div class="form-links">
-            <p><a href="https://pro-culinaria.ru/registration">Зарегистрироваться</a></p>
-            <p><a href="https://pro-culinaria.ru/registration">Восстановить пароль</a></p>
+            <p id="reg-link-container"><a href="https://pro-culinaria.ru/registration">Зарегистрироваться</a></p>
+            <p id="reset-link-container"><a href="#" onclick="showForm('reset')">Восстановить пароль</a></p>
+            <p id="login-link-container" style="display: none;"><a href="#" onclick="showForm('login')">Вернуться ко входу</a></p>
         </div>
     </div>
+    
     <script>
         function togglePassword() {
             const passwordField = document.getElementById('password');
@@ -132,6 +145,35 @@
             passwordToggleButton.textContent = (type === 'password') ? 'Показать' : 'Скрыть';
         }
 
+        function showForm(formType) {
+            const loginForm = document.getElementById('loginForm');
+            const resetForm = document.getElementById('resetPasswordForm');
+            const title = document.getElementById('form-title');
+            const regLink = document.getElementById('reg-link-container');
+            const resetLink = document.getElementById('reset-link-container');
+            const loginLink = document.getElementById('login-link-container');
+            const messageElement = document.getElementById('message');
+
+            if (formType === 'login') {
+                loginForm.style.display = 'block';
+                resetForm.style.display = 'none';
+                title.textContent = 'Вход в личный кабинет';
+                regLink.style.display = 'block';
+                resetLink.style.display = 'block';
+                loginLink.style.display = 'none';
+                messageElement.textContent = '';
+            } else if (formType === 'reset') {
+                loginForm.style.display = 'none';
+                resetForm.style.display = 'block';
+                title.textContent = 'Восстановление пароля';
+                regLink.style.display = 'none';
+                resetLink.style.display = 'none';
+                loginLink.style.display = 'block';
+                messageElement.textContent = '';
+            }
+        }
+        
+        // Обработчик отправки формы входа
         const loginForm = document.getElementById('loginForm');
         loginForm.addEventListener('submit', async function(event) {
             event.preventDefault();
@@ -156,10 +198,48 @@
                     window.location.href = '/lk.html';
                 } else {
                     messageElement.textContent = data.message || 'Неверный email или пароль';
+                    messageElement.style.color = 'red';
                 }
             } catch (error) {
                 console.error('Ошибка при авторизации:', error);
                 messageElement.textContent = 'Произошла ошибка при попытке входа. Пожалуйста, попробуйте позже.';
+                messageElement.style.color = 'red';
+            }
+        });
+        
+        // Обработчик отправки формы восстановления пароля
+        const resetPasswordForm = document.getElementById('resetPasswordForm');
+        resetPasswordForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('reset-email').value;
+            const messageElement = document.getElementById('message');
+            
+            messageElement.textContent = 'Обработка...';
+            messageElement.style.color = '#333';
+
+            try {
+                const response = await fetch('https://pro-culinaria-lk.proculinaria-book.ru/.netlify/functions/reset-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || `Server returned error: ${response.status} - ${response.statusText}`);
+                }
+                
+                messageElement.style.color = 'green';
+                messageElement.innerHTML = result.message || 'Ссылка для восстановления отправлена на ваш e-mail.';
+                
+            } catch (e) {
+                console.error('Ошибка:', e);
+                messageElement.textContent = e.message || 'Произошла ошибка при восстановлении пароля. Пожалуйста, попробуйте позже.';
+                messageElement.style.color = 'red';
             }
         });
     </script>
