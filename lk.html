@@ -53,8 +53,8 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 10px 18px;      /* компактнее, чтобы укладываться в 50px */
-            min-height: 50px;        /* минимальная высота 50px как просили */
+            padding: 10px 18px;
+            min-height: 50px;
             background-color: #fb4d35;
             color: white;
             text-decoration: none;
@@ -123,7 +123,7 @@
         <h1>Добро пожаловать в Личный кабинет!</h1>
         
         <div class="links-section">
-            <a href="#" class="lk-link">Ознакомительный раздел</a>
+            <a href="https://for-dating.proculinaria-book.ru/" class="lk-link">Ознакомительный раздел</a>
 
             <a href="#" class="lk-link" onclick="checkAndRedirect(); return false;">
                 <span>Читальный зал Библиотеки</span>
@@ -149,14 +149,14 @@
             localStorage.removeItem('user');
             window.location.href = 'https://pro-culinaria-lk.proculinaria-book.ru';
         });
-
-        // Функция проверки доступа (оставлено как было)
+        
+        // Функция проверки доступа
         const checkAndRedirect = async () => {
             const user = JSON.parse(localStorage.getItem('user'));
             
             if (!user || !user.email) {
                 alert('Ошибка: Данные пользователя не найдены. Пожалуйста, попробуйте войти снова.');
-                window.location.href = '/';
+                window.location.href = 'https://pro-culinaria-lk.proculinaria-book.ru';
                 return;
             }
 
@@ -166,7 +166,7 @@
                 });
 
                 if (response.ok) {
-                    window.location.href = 'pro-culinaria-library.proculinaria-book.ru/';
+                    window.location.href = 'https://pro-culinaria-library.proculinaria-book.ru/';
                 } else {
                     const errorMessage = await response.text();
                     alert(`Ошибка: ${errorMessage}`);
