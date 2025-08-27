@@ -77,7 +77,7 @@ exports.handler = async (event) => {
         });
 
         const mailOptions = {
-            from: 'mail@proculinaria.ru',
+            from: 'pro-culinaria@proculinaria.ru',
             to: email,
             subject: 'Восстановление пароля',
             html: `
