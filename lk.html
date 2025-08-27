@@ -47,36 +47,23 @@
             margin-top: 30px;
         }
 
-        .lk-link-container {
-            background-color: #fb4d35;
-            padding: 15px 25px;
-            border-radius: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 80px; /* Фиксированная высота для одинаковых плашек */
-        }
-        
         .lk-link {
+            display: block;
+            padding: 15px 25px;
+            background-color: #fb4d35;
             color: white;
             text-decoration: none;
             font-size: 18px;
             font-weight: 700;
-            transition: color 0.3s ease;
+            transition: background-color 0.3s ease;
+            border-radius: 0;
+            text-align: center;
         }
 
-        .lk-link-container:hover {
+        .lk-link:hover {
             background-color: #e5462e;
         }
 
-        .lk-info {
-            color: white;
-            font-size: 12px;
-            margin-top: 5px;
-            text-align: center;
-        }
-        
         .logout-button {
             margin-top: 40px;
             background: none;
@@ -91,7 +78,28 @@
         .logout-button:hover {
             opacity: 0.8;
         }
-
+        
+        /* Дополнительный стиль для текста внутри второй плашки */
+        .library-access-info {
+            font-size: 12px;
+            font-weight: 400; /* Не жирный */
+            color: white;
+            margin-top: 5px; /* Отступ от основной надписи */
+        }
+        
+        /* Изменение для вертикального выравнивания контента внутри плашки */
+        .lk-link.with-info {
+            padding: 10px 25px; /* Уменьшаем padding, чтобы уместить две строки */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .lk-link.with-info span {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        
         @media (max-width: 768px) {
             .lk-container {
                 padding: 20px;
@@ -103,9 +111,13 @@
             }
             .lk-link {
                 font-size: 16px;
-            }
-            .lk-link-container {
                 padding: 12px 20px;
+            }
+            .lk-link.with-info span {
+                font-size: 16px;
+            }
+            .library-access-info {
+                font-size: 10px;
             }
         }
     </style>
@@ -115,14 +127,12 @@
         <h1>Добро пожаловать в Личный кабинет!</h1>
         
         <div class="links-section">
-            <div class="lk-link-container">
-                <a href="#" class="lk-link">Ознакомительный раздел</a>
-            </div>
+            <a href="#" class="lk-link">Ознакомительный раздел</a>
 
-            <div class="lk-link-container">
-                <a href="#" class="lk-link" onclick="checkAndRedirect(); return false;">Читальный зал Библиотеки</a>
-                <span class="lk-info">для доступа требуется действующая подписка</span>
-            </div>
+            <a href="#" class="lk-link with-info" onclick="checkAndRedirect(); return false;">
+                <span>Читальный зал Библиотеки</span>
+                <span class="library-access-info">для доступа требуется действующая подписка</span>
+            </a>
         </div>
         
         <button class="logout-button" id="logoutButton">Выйти из кабинета</button>
@@ -159,7 +169,7 @@
                 });
 
                 if (response.ok) {
-                    window.location.href = 'https://pro-culinaria-library.proculinaria-book.ru/';
+                    window.location.href = 'https://pro-culinaria-library.proculinaria-book.ru';
                 } else {
                     const errorMessage = await response.text();
                     alert(`Ошибка: ${errorMessage}`);
