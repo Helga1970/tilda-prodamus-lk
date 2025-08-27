@@ -62,7 +62,7 @@ exports.handler = async (event) => {
         }
 
         const newPassword = crypto.randomBytes(8).toString('hex');
-        
+
         const updatePasswordQuery = 'UPDATE users SET password = $1 WHERE email = $2';
         await client.query(updatePasswordQuery, [newPassword, email]);
 
@@ -82,7 +82,8 @@ exports.handler = async (event) => {
             subject: 'Восстановление пароля',
             html: `
                 <p>Здравствуйте!</p>
-                <p>Ваш новый пароль для входа в Личный кабинет: **${newPassword}**</p>
+                <p>Ваш логин: ${email}</p>
+                <p>Ваш новый пароль для входа в Личный кабинет: ${newPassword}</p>
                 <p>Вы можете использовать этот пароль, чтобы войти в свой личный кабинет по этой ссылке: <a href="https://pro-culinaria-lk.proculinaria-book.ru">Войти</a></p>
                 <p>С уважением,<br>Команда Pro-Culinaria</p>
             `,
