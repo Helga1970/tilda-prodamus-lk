@@ -75,11 +75,11 @@ const handleProdamusWebhook = async (client, payload) => {
             subject: 'Доступ к Личному кабинету',
             html: `
             <h2>Здравствуйте, ${customerName}!</h2>
-            <p>Благодарим за оплату. Ваш доступ к материалам открыт на **${accessDays}** дней, до ${formattedEndDate} включительно.</p>
+            <p>Благодарим за оплату. Ваш доступ к материалам открыт на ${accessDays} дней, до ${formattedEndDate} включительно.</p>
             <p>Ваши данные для входа в Личный кабинет:</p>
             <ul>
-                <li>**Email:** ${customerEmail}</li>
-                <li>**Пароль:** ${password}</li>
+                <li>Email: ${customerEmail}</li>
+                <li>Пароль: ${password}</li>
             </ul>
             <p>Войдите в свой Личный кабинет, чтобы получить доступ к материалам.</p>
             <p>Ссылка на ЛК: https://pro-culinaria-lk.proculinaria-book.ru</p>
