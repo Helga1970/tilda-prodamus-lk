@@ -47,23 +47,36 @@
             margin-top: 30px;
         }
 
-        .lk-link {
-            display: block;
-            padding: 15px 25px;
+        .lk-link-container {
             background-color: #fb4d35;
+            padding: 15px 25px;
+            border-radius: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 80px; /* Фиксированная высота для одинаковых плашек */
+        }
+        
+        .lk-link {
             color: white;
             text-decoration: none;
             font-size: 18px;
             font-weight: 700;
-            transition: background-color 0.3s ease;
-            border-radius: 0;
-            text-align: center;
+            transition: color 0.3s ease;
         }
 
-        .lk-link:hover {
+        .lk-link-container:hover {
             background-color: #e5462e;
         }
 
+        .lk-info {
+            color: white;
+            font-size: 12px;
+            margin-top: 5px;
+            text-align: center;
+        }
+        
         .logout-button {
             margin-top: 40px;
             background: none;
@@ -90,6 +103,8 @@
             }
             .lk-link {
                 font-size: 16px;
+            }
+            .lk-link-container {
                 padding: 12px 20px;
             }
         }
@@ -100,17 +115,18 @@
         <h1>Добро пожаловать в Личный кабинет!</h1>
         
         <div class="links-section">
-            <a href="#" class="lk-link">Ознакомительный раздел</a>
+            <div class="lk-link-container">
+                <a href="#" class="lk-link">Ознакомительный раздел</a>
+            </div>
 
-            <a href="#" class="lk-link" onclick="checkAndRedirect(); return false;">Читальный зал Библиотеки</a>
-            <div class="library-info">
-                <small>для доступа требуется действующая подписка</small>
+            <div class="lk-link-container">
+                <a href="#" class="lk-link" onclick="checkAndRedirect(); return false;">Читальный зал Библиотеки</a>
+                <span class="lk-info">для доступа требуется действующая подписка</span>
             </div>
         </div>
         
         <button class="logout-button" id="logoutButton">Выйти из кабинета</button>
     </div>
-</body>
 
     <script>
         // Проверяем авторизацию при загрузке страницы
