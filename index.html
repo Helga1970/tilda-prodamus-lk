@@ -98,11 +98,6 @@
         .form-links a:hover {
             text-decoration: underline;
         }
-
-        /* Новый стиль для скрытия ссылки на форме восстановления */
-        body.reset-form #reset-link-container {
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -133,7 +128,7 @@
 
         <p id="message"></p>
         <div class="form-links">
-            <p><a href="https://pro-culinaria.ru/registration#">Зарегистрироваться</a></p>
+                        <p id="registration-link-container"><a href="https://pro-culinaria.ru/registration#">Зарегистрироваться</a></p>
             <p id="reset-link-container"><a href="#" onclick="showForm('reset')">Восстановить пароль</a></p>
             <p id="login-link-container" style="display: none;"><a href="#" onclick="showForm('login')">Вернуться к входу</a></p>
         </div>
@@ -151,23 +146,27 @@
             const loginForm = document.getElementById('loginForm');
             const resetForm = document.getElementById('resetPasswordForm');
             const title = document.getElementById('form-title');
+            const regLink = document.getElementById('registration-link-container');
+            const resetLink = document.getElementById('reset-link-container');
             const loginLink = document.getElementById('login-link-container');
+            const messageElement = document.getElementById('message');
 
-            // Снимаем класс с body
-            document.body.classList.remove('reset-form');
+            messageElement.textContent = ''; // Очистка сообщения при переключении форм
 
             if (formType === 'login') {
                 loginForm.style.display = 'block';
                 resetForm.style.display = 'none';
                 title.textContent = 'Вход в личный кабинет';
+                regLink.style.display = 'block';
+                resetLink.style.display = 'block';
                 loginLink.style.display = 'none';
             } else if (formType === 'reset') {
                 loginForm.style.display = 'none';
                 resetForm.style.display = 'block';
                 title.textContent = 'Восстановление пароля';
+                regLink.style.display = 'none';
+                resetLink.style.display = 'none';
                 loginLink.style.display = 'block';
-                // Добавляем класс к body, чтобы скрыть ссылку "Восстановить пароль"
-                document.body.classList.add('reset-form');
             }
         }
 
@@ -182,7 +181,9 @@
             try {
                 const response = await fetch(loginUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
                     body: JSON.stringify({ email, password }),
                 });
 
@@ -200,16 +201,23 @@
             }
         });
 
-        // --- НЕДОСТАЮЩИЙ КОД ДЛЯ ВОССТАНОВЛЕНИЯ ПАРОЛЯ ---
         const resetPasswordForm = document.getElementById('resetPasswordForm');
         resetPasswordForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             const email = document.getElementById('reset-email').value.trim();
             const messageElement = document.getElementById('message');
             const formElement = document.getElementById('resetPasswordForm');
+            const regLinkContainer = document.getElementById('registration-link-container');
+            const loginLinkContainer = document.getElementById('login-link-container');
+            const resetLinkContainer = document.getElementById('reset-link-container');
 
             messageElement.textContent = 'Обработка...';
             messageElement.style.color = '#333';
+            
+            // Скрыть все ссылки перед отправкой
+            regLinkContainer.style.display = 'none';
+            loginLinkContainer.style.display = 'none';
+            resetLinkContainer.style.display = 'none';
 
             try {
                 const response = await fetch('https://pro-culinaria-lk.proculinaria-book.ru/.netlify/functions/reset-password', {
@@ -227,18 +235,21 @@
                 formElement.style.display = 'none';
                 document.getElementById('form-title').textContent = 'Восстановление пароля';
                 messageElement.style.color = 'green';
-                messageElement.innerHTML = result.message || 'На ваш e-mail отправлены инструкции по восстановлению.';
+                messageElement.innerHTML = 'Новый пароль отправлен на вашу почту.';
 
-                document.getElementById('login-link-container').style.display = 'block';
-                document.getElementById('reset-link-container').style.display = 'none';
+                // Показываем нужные ссылки
+                regLinkContainer.style.display = 'block';
+                loginLinkContainer.style.display = 'block';
             } catch (e) {
                 console.error('Ошибка:', e);
                 messageElement.textContent = e.message || 'Произошла ошибка при восстановлении пароля. Пожалуйста, попробуйте позже.';
                 messageElement.style.color = 'red';
+                // В случае ошибки показываем все ссылки, чтобы пользователь мог попробовать снова
+                regLinkContainer.style.display = 'block';
+                loginLinkContainer.style.display = 'block';
+                resetLinkContainer.style.display = 'block';
             }
         });
-        // --- КОНЕЦ НЕДОСТАЮЩЕГО КОДА ---
-
     </script>
 </body>
 </html>
