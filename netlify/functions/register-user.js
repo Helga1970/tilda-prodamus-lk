@@ -30,9 +30,9 @@ exports.handler = async (event) => {
 
     try {
         await client.connect();
-        
+
         const { name, email, password } = JSON.parse(event.body);
-        
+
         if (!name || !email || !password) {
             return {
                 statusCode: 400,
@@ -51,14 +51,14 @@ exports.handler = async (event) => {
                 body: JSON.stringify({ error: 'Пользователь с таким e-mail уже зарегистрирован' })
             };
         }
-        
+
         // Сохранение пароля в открытом виде
         const accessEndDate = new Date();
         accessEndDate.setDate(accessEndDate.getDate() - 1);
 
         const insertUserQuery = 'INSERT INTO users (name, email, password, access_end_date) VALUES ($1, $2, $3, $4) RETURNING id';
         await client.query(insertUserQuery, [name, email, password, accessEndDate.toISOString()]);
-        
+
         // Отправка письма пользователю
         const transporter = nodemailer.createTransport({
             host: 'in-v3.mailjet.com',
@@ -79,8 +79,8 @@ exports.handler = async (event) => {
                 <p>Вы успешно зарегистрировались на сайте Pro-Culinaria.</p>
                 <p>Ваши данные для входа:</p>
                 <ul>
-                    <li>**E-mail:** ${email}</li>
-                    <li>**Пароль:** ${password}</li>
+                    <li>E-mail: ${email}</li>
+                    <li>Пароль: ${password}</li>
                 </ul>
                 <p>Вы можете войти в свой личный кабинет по этой ссылке: <a href="https://pro-culinaria-lk.proculinaria-book.ru">Войти</a></p>
                 <p>С уважением,<br>Команда Pro-Culinaria</p>
@@ -92,7 +92,7 @@ exports.handler = async (event) => {
         } catch (emailError) {
             console.error('Error sending email:', emailError);
         }
-        
+
         return {
             statusCode: 200,
             headers: headers,
