@@ -82,7 +82,7 @@ exports.handler = async (event) => {
             }
             const hasAccess = await checkSubscription(userEmailFromHeader);
             if (!hasAccess) {
-                const errorBody = 'Доступ запрещён. Ваша подписка истекла. Для оплаты подписки перейдите по ссылке: https://pro-culinaria.ru/aboutplatej';
+                const errorBody = 'Доступ запрещён. Для доступа требуется действующая подписка. Для оплаты подписки перейдите по ссылке: https://pro-culinaria.ru/aboutplatej';
                 return { 
                     statusCode: 403,
                     body: errorBody
