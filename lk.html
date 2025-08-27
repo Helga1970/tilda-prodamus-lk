@@ -15,7 +15,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-image: url('./a7f3dec3-aa46-42ce-a500-d40abb995b63.png');
+            background-image: url('a7f3dec3-aa46-42ce-a500-d40abb995b63.png');
             background-size: cover;
             background-position: center center;
             background-repeat: no-repeat;
@@ -49,7 +49,8 @@
 
         .lk-link {
             display: block;
-            padding: 15px 25px;
+            padding: 12px 20px;
+            min-height: 50px;
             background-color: #fb4d35;
             color: white;
             text-decoration: none;
@@ -58,23 +59,17 @@
             transition: background-color 0.3s ease;
             border-radius: 0;
             text-align: center;
-            min-height: 70px; /* одинаковая высота */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         }
 
         .lk-link:hover {
             background-color: #e5462e;
         }
 
-        .lk-subtext {
-            font-size: 12px;
+        .subscription-note {
+            font-size: 14px;
             font-weight: normal;
+            color: #333;
             margin-top: 5px;
-            line-height: 1.2;
-            color: #fff;
-            opacity: 0.9;
         }
 
         .logout-button {
@@ -103,10 +98,7 @@
             }
             .lk-link {
                 font-size: 16px;
-                padding: 12px 20px;
-            }
-            .lk-subtext {
-                font-size: 11px;
+                padding: 10px 16px;
             }
         }
     </style>
@@ -118,10 +110,10 @@
         <div class="links-section">
             <a href="#" class="lk-link">Ознакомительный раздел</a>
 
-            <a href="#" class="lk-link" onclick="checkAndRedirect(); return false;">
-                Читальный зал Библиотеки
-                <span class="lk-subtext">для доступа требуется действующая подписка</span>
-            </a>
+            <div>
+                <a href="#" class="lk-link" onclick="checkAndRedirect(); return false;">Читальный зал Библиотеки</a>
+                <div class="subscription-note">для доступа требуется действующая подписка</div>
+            </div>
         </div>
         
         <button class="logout-button" id="logoutButton">Выйти из кабинета</button>
@@ -142,7 +134,7 @@
             window.location.href = 'https://pro-culinaria-lk.proculinaria-book.ru';
         });
 
-        // Ваша рабочая функция для проверки доступа
+        // Функция проверки доступа
         const checkAndRedirect = async () => {
             const user = JSON.parse(localStorage.getItem('user'));
             
