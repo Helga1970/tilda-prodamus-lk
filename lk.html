@@ -43,33 +43,44 @@
         .links-section {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
             margin-top: 30px;
         }
 
+        /* Плашки — компактные, адаптивные и центрированные */
         .lk-link {
-            display: block;
-            padding: 12px 20px;
-            min-height: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px 18px;      /* компактнее, чтобы укладываться в 50px */
+            min-height: 50px;        /* минимальная высота 50px как просили */
             background-color: #fb4d35;
             color: white;
             text-decoration: none;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
             transition: background-color 0.3s ease;
             border-radius: 0;
             text-align: center;
+            box-sizing: border-box;
+            width: 100%;
         }
 
         .lk-link:hover {
             background-color: #e5462e;
         }
 
-        .subscription-note {
-            font-size: 14px;
-            font-weight: normal;
-            color: #333;
-            margin-top: 5px;
+        /* Подпись внутри плашки — белая, мелкий не жирный шрифт, центрирована */
+        .lk-link .lk-subtext {
+            display: block;
+            font-size: 11px;
+            font-weight: 400;
+            color: #ffffff;
+            margin-top: 6px;
+            line-height: 1.1;
+            text-align: center;
+            opacity: 0.95;
         }
 
         .logout-button {
@@ -97,8 +108,12 @@
                 margin-bottom: 20px;
             }
             .lk-link {
-                font-size: 16px;
-                padding: 10px 16px;
+                font-size: 15px;
+                padding: 9px 14px;
+            }
+            .lk-link .lk-subtext {
+                font-size: 10px;
+                margin-top: 4px;
             }
         }
     </style>
@@ -110,10 +125,10 @@
         <div class="links-section">
             <a href="#" class="lk-link">Ознакомительный раздел</a>
 
-            <div>
-                <a href="#" class="lk-link" onclick="checkAndRedirect(); return false;">Читальный зал Библиотеки</a>
-                <div class="subscription-note">для доступа требуется действующая подписка</div>
-            </div>
+            <a href="#" class="lk-link" onclick="checkAndRedirect(); return false;">
+                <span>Читальный зал Библиотеки</span>
+                <span class="lk-subtext">для доступа требуется действующая подписка</span>
+            </a>
         </div>
         
         <button class="logout-button" id="logoutButton">Выйти из кабинета</button>
@@ -126,6 +141,7 @@
             if (!user) {
                 window.location.href = 'https://pro-culinaria-lk.proculinaria-book.ru';
             }
+            equalizeTiles(); // выровнять высоты при загрузке
         };
 
         // Обработчик кнопки "Выйти"
@@ -134,7 +150,7 @@
             window.location.href = 'https://pro-culinaria-lk.proculinaria-book.ru';
         });
 
-        // Функция проверки доступа
+        // Функция проверки доступа (оставлено как было)
         const checkAndRedirect = async () => {
             const user = JSON.parse(localStorage.getItem('user'));
             
@@ -161,6 +177,32 @@
                 alert('Произошла ошибка при получении доступа к материалам. Пожалуйста, попробуйте позже.');
             }
         };
+
+        // Небольшая функция для приведения плашек к одинаковой высоте (адаптивно)
+        function equalizeTiles() {
+            const tiles = Array.from(document.querySelectorAll('.links-section .lk-link'));
+            if (!tiles.length) return;
+            // сбросить ранее установленную высоту
+            tiles.forEach(t => t.style.height = 'auto');
+            let max = 0;
+            tiles.forEach(t => {
+                const h = t.offsetHeight;
+                if (h > max) max = h;
+            });
+            // гарантируем минимум 50px
+            if (max < 50) max = 50;
+            tiles.forEach(t => t.style.height = max + 'px');
+        }
+
+        // перестроить при ресайзе (с небольшой задержкой)
+        let _resizeTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(_resizeTimer);
+            _resizeTimer = setTimeout(equalizeTiles, 120);
+        });
+
+        // вызвать после загрузки шрифтов, если потребуется — небольшой запас
+        document.fonts && document.fonts.ready.then(equalizeTiles).catch(()=>{});
     </script>
 </body>
 </html>
