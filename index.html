@@ -2,87 +2,128 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Регистрация на сайте</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход в личный кабинет</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Circe+Rounded:wght@400;700&display=swap');
-        body { font-family: 'Circe Rounded', sans-serif; background-color: #f4f4f4; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .registration-container { background-color: #ffffff; padding: 40px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); width: 100%; max-width: 400px; box-sizing: border-box; text-align: center; }
-        h1 { text-align: center; color: #333; margin-bottom: 30px; }
-        .form-group { margin-bottom: 20px; text-align: left; }
-        label { display: block; margin-bottom: 8px; color: #555; font-weight: 700; }
-        input[type="text"], input[type="email"], .password-container input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
-        .password-container { position: relative; display: flex; align-items: center; }
-        .password-container input { flex-grow: 1; padding-right: 80px; }
-        .password-toggle { position: absolute; right: 10px; background: none; border: none; cursor: pointer; font-size: 14px; color: #999; }
-        button[type="submit"] { width: 100%; padding: 15px; background-color: #fb4d35; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; transition: background-color 0.3s; }
-        button[type="submit"]:hover { background-color: #e5462e; }
-        #message { margin-top: 20px; font-weight: 700; line-height: 1.5; }
-        .form-links { margin-top: 20px; font-size: 14px; }
-        .form-links div { margin-bottom: 5px; }
-        .form-links a { color: #fb4d35; text-decoration: none; }
-        .form-links a:hover { text-decoration: underline; }
-        .captcha-group { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-        #captcha-question { font-weight: 700; color: #333; }
-        #captcha-input { width: 50%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
+        body {
+            font-family: 'Circe Rounded', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .login-box {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
+        }
+        h2 {
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 700;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 0;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .password-container input {
+            flex-grow: 1;
+            padding-right: 80px;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: #999;
+        }
+        .login-button {
+            width: 100%;
+            padding: 15px;
+            background-color: #fb4d35;
+            color: #fff;
+            border: none;
+            border-radius: 0;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .login-button:hover {
+            background-color: #e5462e;
+        }
+        #message {
+            margin-top: 20px;
+            font-weight: 700;
+            line-height: 1.5;
+            color: red;
+        }
+        .form-links {
+            margin-top: 20px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .form-links a {
+            color: #fb4d35;
+            text-decoration: none;
+        }
+        .form-links a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
-    <div class="registration-container">
-        <h1>Регистрация на сайте</h1>
-        
-        <form id="registrationForm">
-            <div class="form-group">
-                <label for="name">имя:</label>
-                <input type="text" id="name" name="name" required>
+    <div class="login-box">
+        <h2>Вход в личный кабинет</h2>
+        <form id="loginForm">
+            <div class="input-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required>
             </div>
-            
-            <div class="form-group">
-                <label for="email">e-mail:</label>
-                <input type="email" id="email" name="email" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="password">пароль:</label>
+            <div class="input-group">
+                <label for="password">Пароль</label>
                 <div class="password-container">
-                    <input type="password" id="password" name="password" placeholder="Минимум 8 символов, буквы и цифры" required>
+                    <input type="password" id="password" required>
                     <button type="button" class="password-toggle" id="password-toggle-btn" onclick="togglePassword()">Показать</button>
                 </div>
             </div>
-            
-            <div class="form-group captcha-group">
-                <label for="captcha-input" id="captcha-question">Капча</label>
-                <input type="text" id="captcha-input" name="captcha" required>
-            </div>
-            
-            <button type="submit">Зарегистрироваться</button>
+            <button type="submit" class="login-button">Войти</button>
         </form>
-        
-        <form id="resetPasswordForm" style="display: none;">
-            <div class="form-group">
-                <label for="reset-email">e-mail:</label>
-                <input type="email" id="reset-email" name="email" required>
-            </div>
-            <button type="submit">Восстановить пароль</button>
-        </form>
-        
         <p id="message"></p>
-        
         <div class="form-links">
-            <div>Уже зарегистрированы? <a href="https://pro-culinaria-lk.proculinaria-book.ru">Войти</a></div>
-            <div><a href="https://pro-culinaria-lk.proculinaria-book.ru/reset-password.html">Восстановить пароль</a></div>
+            <p><a href="https://pro-culinaria.ru/registration">Зарегистрироваться</a></p>
+            <p><a href="https://pro-culinaria.ru/registration">Восстановить пароль</a></p>
         </div>
     </div>
-    
     <script>
-        let captchaAnswer;
-
-        function generateCaptcha() {
-            const num1 = Math.floor(Math.random() * 10) + 1;
-            const num2 = Math.floor(Math.random() * 10) + 1;
-            document.getElementById('captcha-question').textContent = `Сколько будет ${num1} + ${num2}?`;
-            captchaAnswer = num1 + num2;
-        }
-
         function togglePassword() {
             const passwordField = document.getElementById('password');
             const passwordToggleButton = document.getElementById('password-toggle-btn');
@@ -91,66 +132,36 @@
             passwordToggleButton.textContent = (type === 'password') ? 'Показать' : 'Скрыть';
         }
 
-        function isValidPassword(password) {
-            const minLength = 8;
-            const hasLetters = /[a-zA-Z]/.test(password);
-            const hasNumbers = /[0-9]/.test(password);
-            return password.length >= minLength && hasLetters && hasNumbers;
-        }
-
-        document.getElementById('registrationForm').addEventListener('submit', async (event) => {
+        const loginForm = document.getElementById('loginForm');
+        loginForm.addEventListener('submit', async function(event) {
             event.preventDefault();
-            
-            const name = document.getElementById('name').value;
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const captchaInput = document.getElementById('captcha-input').value;
             const messageElement = document.getElementById('message');
-            
-            if (parseInt(captchaInput) !== captchaAnswer) {
-                messageElement.textContent = 'Неверный ответ на капчу. Попробуйте еще раз.';
-                messageElement.style.color = 'red';
-                generateCaptcha();
-                return;
-            }
-
-            if (!isValidPassword(password)) {
-                messageElement.textContent = 'Пароль должен содержать минимум 8 символов, включая буквы и цифры.';
-                messageElement.style.color = 'red';
-                return;
-            }
-
-            messageElement.textContent = 'Обработка...';
+            const loginUrl = 'https://pro-culinaria-lk.proculinaria-book.ru/.netlify/functions/login';
 
             try {
-                const response = await fetch('https://pro-culinaria-lk.proculinaria-book.ru/.netlify/functions/register-user', {
+                const response = await fetch(loginUrl, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ name, email, password })
+                    body: JSON.stringify({ email, password }),
                 });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `Server returned error: ${response.status} - ${response.statusText}`);
-                }
+                const data = await response.json();
 
-                messageElement.style.color = 'green';
-                messageElement.innerHTML = 'Регистрация прошла успешно!<br>Проверьте свою почту для входа.<br>Если письма нет во входящих, проверьте папку **Спам**.<br><a href="https://pro-culinaria-lk.proculinaria-book.ru">Войти в личный кабинет</a>';
-                document.getElementById('registrationForm').style.display = 'none';
-                document.querySelector('h1').style.display = 'none';
-                document.querySelector('.form-links').style.display = 'none';
-                
-            } catch (e) {
-                console.error('Ошибка:', e);
-                messageElement.textContent = e.message || 'Произошла ошибка при регистрации. Пожалуйста, попробуйте позже.';
-                messageElement.style.color = 'red';
-                generateCaptcha();
+                if (response.ok) {
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = '/lk.html';
+                } else {
+                    messageElement.textContent = data.message || 'Неверный email или пароль';
+                }
+            } catch (error) {
+                console.error('Ошибка при авторизации:', error);
+                messageElement.textContent = 'Произошла ошибка при попытке входа. Пожалуйста, попробуйте позже.';
             }
         });
-        
-        generateCaptcha();
     </script>
 </body>
 </html>
