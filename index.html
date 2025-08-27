@@ -92,12 +92,23 @@
             line-height: 1.5;
         }
         .form-links a {
-            color: #fb4d35;
+            color: #fb4d35; /* Фирменный коралловый цвет для ссылок */
             text-decoration: none;
+            font-weight: 400; /* Не жирный */
         }
         .form-links a:hover {
             text-decoration: underline;
         }
+        /* Стиль для сообщения об успешном восстановлении, чтобы ссылки были как обычный текст */
+        .success-message-links a {
+            color: #fb4d35 !important; /* Убедимся, что цвет остается коралловым */
+            font-weight: 400 !important; /* Убедимся, что не жирный */
+            text-decoration: none !important; /* Убедимся, что нет подчеркивания по умолчанию */
+        }
+        .success-message-links a:hover {
+            text-decoration: underline !important;
+        }
+
     </style>
 </head>
 <body>
@@ -128,7 +139,7 @@
 
         <p id="message"></p>
         <div class="form-links">
-            <p><a href="https://pro-culinaria.ru/registration#">Зарегистрироваться</a></p>
+            <p id="registration-link-container"><a href="https://pro-culinaria.ru/registration#">Зарегистрироваться</a></p>
             <p id="reset-link-container"><a href="#" onclick="showForm('reset')">Восстановить пароль</a></p>
             <p id="login-link-container" style="display: none;"><a href="#" onclick="showForm('login')">Вернуться к входу</a></p>
         </div>
@@ -146,18 +157,19 @@
             const loginForm = document.getElementById('loginForm');
             const resetForm = document.getElementById('resetPasswordForm');
             const title = document.getElementById('form-title');
-            const regLink = document.querySelector('p a[href="https://pro-culinaria.ru/registration#"]').parentNode; // Находим родительский элемент <p>
+            const regLink = document.getElementById('registration-link-container'); // Теперь правильно ссылается на p с ID
             const resetLink = document.getElementById('reset-link-container');
             const loginLink = document.getElementById('login-link-container');
             const messageElement = document.getElementById('message');
 
             messageElement.textContent = ''; // Очистка сообщения при переключении форм
+            messageElement.classList.remove('success-message-links'); // Убираем класс для ссылок
 
             if (formType === 'login') {
                 loginForm.style.display = 'block';
                 resetForm.style.display = 'none';
                 title.textContent = 'Вход в личный кабинет';
-                regLink.style.display = 'block';
+                regLink.style.display = 'block'; // Показываем Зарегистрироваться
                 resetLink.style.display = 'block';
                 loginLink.style.display = 'none';
             } else if (formType === 'reset') {
@@ -194,10 +206,12 @@
                     window.location.href = 'lk.html';
                 } else {
                     messageElement.textContent = data.message || 'Неверный email или пароль';
+                    messageElement.style.color = 'red'; // Убедимся, что ошибка красная
                 }
             } catch (error) {
                 console.error('Ошибка при авторизации:', error);
                 messageElement.textContent = 'Произошла ошибка при попытке входа. Пожалуйста, попробуйте позже.';
+                messageElement.style.color = 'red';
             }
         });
 
@@ -207,14 +221,15 @@
             const email = document.getElementById('reset-email').value.trim();
             const messageElement = document.getElementById('message');
             const formElement = document.getElementById('resetPasswordForm');
-            const regLinkContainer = document.querySelector('p a[href="https://pro-culinaria.ru/registration#"]').parentNode;
+            const regLinkContainer = document.getElementById('registration-link-container');
             const loginLinkContainer = document.getElementById('login-link-container');
             const resetLinkContainer = document.getElementById('reset-link-container');
 
             messageElement.textContent = 'Обработка...';
             messageElement.style.color = '#333';
-            
-            // Скрыть все ссылки
+            messageElement.classList.remove('success-message-links'); // Убираем класс, если был
+
+            // Скрыть все ссылки перед отправкой
             regLinkContainer.style.display = 'none';
             loginLinkContainer.style.display = 'none';
             resetLinkContainer.style.display = 'none';
@@ -234,19 +249,26 @@
 
                 formElement.style.display = 'none';
                 document.getElementById('form-title').textContent = 'Восстановление пароля';
-                messageElement.style.color = 'green';
+                messageElement.style.color = 'green'; // Сообщение об успехе зеленое
+                messageElement.classList.add('success-message-links'); // Добавляем класс для стилизации ссылок в сообщении
                 messageElement.innerHTML = `Новый пароль отправлен на вашу почту.
                     <br><a href="#" onclick="showForm('login')">Вернуться к входу</a>
                     <br><a href="https://pro-culinaria.ru/registration#">Зарегистрироваться</a>`;
+
+                // При успешном восстановлении, после показа сообщения, не надо показывать старые ссылки.
+                // Они уже встроены в messageElement.innerHTML.
+                // showForm('login') вызовется, когда пользователь кликнет "Вернуться к входу"
 
             } catch (e) {
                 console.error('Ошибка:', e);
                 messageElement.textContent = e.message || 'Произошла ошибка при восстановлении пароля. Пожалуйста, попробуйте позже.';
                 messageElement.style.color = 'red';
+                messageElement.classList.remove('success-message-links'); // Убираем класс, если была ошибка
                 
-                // В случае ошибки показываем только нужные ссылки
+                // В случае ошибки показываем все ссылки, кроме ссылки "Вернуться к входу"
                 regLinkContainer.style.display = 'block';
                 resetLinkContainer.style.display = 'block';
+                loginLinkContainer.style.display = 'none'; // Скрываем "Вернуться к входу"
             }
         });
     </script>
