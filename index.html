@@ -98,6 +98,11 @@
         .form-links a:hover {
             text-decoration: underline;
         }
+
+        /* Новый стиль для скрытия ссылки на форме восстановления */
+        body.reset-form #reset-link-container {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -146,27 +151,23 @@
             const loginForm = document.getElementById('loginForm');
             const resetForm = document.getElementById('resetPasswordForm');
             const title = document.getElementById('form-title');
-            const regLink = document.getElementById('reg-link-container');
-            const resetLink = document.getElementById('reset-link-container');
             const loginLink = document.getElementById('login-link-container');
-            const messageElement = document.getElementById('message');
 
-            messageElement.textContent = ''; // Очистка сообщения при переключении форм
+            // Снимаем класс с body
+            document.body.classList.remove('reset-form');
 
             if (formType === 'login') {
                 loginForm.style.display = 'block';
                 resetForm.style.display = 'none';
                 title.textContent = 'Вход в личный кабинет';
-                regLink.style.display = 'block';
-                resetLink.style.display = 'block';
                 loginLink.style.display = 'none';
             } else if (formType === 'reset') {
                 loginForm.style.display = 'none';
                 resetForm.style.display = 'block';
                 title.textContent = 'Восстановление пароля';
-                regLink.style.display = 'none';
-                resetLink.style.display = 'none'; // Вот эта строка скрывает ссылку "Восстановить пароль"
                 loginLink.style.display = 'block';
+                // Добавляем класс к body, чтобы скрыть ссылку "Восстановить пароль"
+                document.body.classList.add('reset-form');
             }
         }
 
@@ -181,9 +182,7 @@
             try {
                 const response = await fetch(loginUrl, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password }),
                 });
 
