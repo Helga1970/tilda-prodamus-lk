@@ -166,7 +166,8 @@
                 });
 
                 if (response.ok) {
-                    window.location.href = 'https://pro-culinaria-library.proculinaria-book.ru/';
+                    // *** ИСПРАВЛЕННАЯ СТРОКА: ПЕРЕДАЁМ ПАРАМЕТР ДОСТУПА ***
+                    window.location.href = 'https://pro-culinaria-library.proculinaria-book.ru/?access=true';
                 } else {
                     const errorMessage = await response.text();
                     alert(`Ошибка: ${errorMessage}`);
