@@ -135,23 +135,14 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            try {
-                const user = localStorage.getItem('user');
-                if (!user) {
-                    window.location.href = 'https://pro-culinaria-lk.proculinaria-book.ru';
-                    return;
-                }
-                const userData = JSON.parse(user);
-                console.log('Пользователь успешно авторизован:', userData.email);
-
-            } catch (e) {
-                console.error('Ошибка при чтении данных пользователя из localStorage:', e);
-                localStorage.removeItem('user');
+        // Проверяем авторизацию при загрузке страницы
+        window.onload = function() {
+            const user = localStorage.getItem('user');
+            if (!user) {
                 window.location.href = 'https://pro-culinaria-lk.proculinaria-book.ru';
             }
-            equalizeTiles();
-        });
+            equalizeTiles(); // выровнять высоты при загрузке
+        };
 
         // Обработчик кнопки "Выйти"
         document.getElementById('logoutButton').addEventListener('click', function() {
@@ -191,12 +182,14 @@
         function equalizeTiles() {
             const tiles = Array.from(document.querySelectorAll('.links-section .lk-link'));
             if (!tiles.length) return;
+            // сбросить ранее установленную высоту
             tiles.forEach(t => t.style.height = 'auto');
             let max = 0;
             tiles.forEach(t => {
                 const h = t.offsetHeight;
                 if (h > max) max = h;
             });
+            // гарантируем минимум 50px
             if (max < 50) max = 50;
             tiles.forEach(t => t.style.height = max + 'px');
         }
