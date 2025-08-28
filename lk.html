@@ -176,43 +176,6 @@
                 });
 
                 if (response.ok) {
-                    window.location.href = 'https://pro-culinaria-library.proculinaria-book.ru/';
-                } else {
-                    const errorMessage = await response.text();
-                    alert(`Ошибка: ${errorMessage}`);
-                }
-
-            } catch (e) {
-                console.error('Ошибка:', e);
-                alert('Произошла ошибка при получении доступа к материалам. Пожалуйста, попробуйте позже.');
-            }
-        };
-
-        // Небольшая функция для приведения плашек к одинаковой высоте (адаптивно)
-        function equalizeTiles() {
-            const tiles = Array.from(document.querySelectorAll('.links-section .lk-link'));
-            if (!tiles.length) return;
-            // сбросить ранее установленную высоту
-            tiles.forEach(t => t.style.height = 'auto');
-            let max = 0;
-            tiles.forEach(t => {
-                const h = t.offsetHeight;
-                if (h > max) max = h;
-            });
-            // гарантируем минимум 50px
-            if (max < 50) max = 50;
-            tiles.forEach(t => t.style.height = max + 'px');
-        }
-
-        // перестроить при ресайзе (с небольшой задержкой)
-        let _resizeTimer;
-        window.addEventListener('resize', function() {
-            clearTimeout(_resizeTimer);
-            _resizeTimer = setTimeout(equalizeTiles, 120);
-        });
-
-        // вызвать после загрузки шрифтов, если потребуется — небольшой запас
-        document.fonts && document.fonts.ready.then(equalizeTiles).catch(()=>{});
-    </script>
-</body>
-</html>
+                    // *** ДОБАВЛЕННАЯ СТРОКА ДЛЯ РЕШЕНИЯ ПРОБЛЕМЫ С IFRAME ***
+                    localStorage.setItem('hasLibraryAccess', 'true');
+                    window.location.href = '
