@@ -1,16 +1,16 @@
-// auth.js — клиентский скрипт для входа
+// Новый код для проверки данных в базе данных
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
     loginForm.addEventListener('submit', async function(event) {
         event.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
 
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value.trim();
-
-        const authUrl = '/.netlify/functions/auth';
+        // URL вашей Netlify функции для авторизации
+        const loginUrl = '/.netlify/functions/prodamus-webhook'; 
 
         try {
-            const response = await fetch(authUrl, {
+            const response = await fetch(loginUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -18,26 +18,17 @@ if (loginForm) {
                 body: JSON.stringify({ email, password }),
             });
 
-            let data = {};
-            try {
-                data = await response.json();
-            } catch (e) {
-                console.error("Ошибка парсинга JSON:", e);
-                data = {};
-            }
+            const data = await response.json();
 
-            console.log("Ответ сервера:", data);
-
-            if (response.ok && data.token) {
-                // Авторизация успешна — сохраняем токен
-                localStorage.setItem('token', data.token);
-                console.log("Токен сохранён:", localStorage.getItem('token'));
+            if (response.ok) {
+                // Если авторизация успешна, сохраняем данные пользователя (например, email)
+                localStorage.setItem('user', JSON.stringify(data.user));
+                // Можно сохранить токен, если ваш бэкенд его возвращает, для дальнейших запросов
+                // localStorage.setItem('token', data.token); 
                 window.location.href = 'lk.html';
             } else {
-                // Ошибка авторизации
-                const message = data.message || 'Неверный email или пароль';
-                console.error("Ошибка авторизации:", message);
-                alert(message);
+                // Если ошибка авторизации, выводим сообщение с сервера
+                alert(data.message || 'Неверный email или пароль');
             }
         } catch (error) {
             console.error('Ошибка при авторизации:', error);
