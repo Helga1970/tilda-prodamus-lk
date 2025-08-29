@@ -11,29 +11,15 @@
         const getMaterialsUrl = async () => {
             const user = JSON.parse(localStorage.getItem('user'));
             
-            if (!user || !user.token) {
+            if (!user || !user.email) {
                 alert('Ошибка: Данные пользователя не найдены. Пожалуйста, попробуйте войти снова.');
                 window.location.href = '/';
                 return;
             }
 
             try {
-                // Перенаправляем на прокси с токеном в заголовке через fetch
-                const response = await fetch('/.netlify/functions/get-content', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${user.token}`
-                    },
-                    body: JSON.stringify({ action: 'proxy', page: 'chitalnyizal' })
-                });
-
-                const result = await response.json();
-                if (result.status === 'access_granted') {
-                    window.location.href = '/chitalnyizal'; // или фактический URL материалов
-                } else {
-                    alert(result.message || 'Доступ запрещён');
-                }
+                // Перенаправляем сразу на прокси-действие функции
+                window.location.href = `/.netlify/functions/get-content?action=proxy&page=chitalnyizal&email=${encodeURIComponent(user.email)}`;
 
             } catch (e) {
                 console.error('Ошибка:', e);
