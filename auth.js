@@ -1,5 +1,4 @@
-<script>
-// Код для обработки формы входа
+// auth.js — клиентский скрипт для входа
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
     loginForm.addEventListener('submit', async function(event) {
@@ -22,17 +21,23 @@ if (loginForm) {
             let data = {};
             try {
                 data = await response.json();
-            } catch {
+            } catch (e) {
+                console.error("Ошибка парсинга JSON:", e);
                 data = {};
             }
+
+            console.log("Ответ сервера:", data);
 
             if (response.ok && data.token) {
                 // Авторизация успешна — сохраняем токен
                 localStorage.setItem('token', data.token);
+                console.log("Токен сохранён:", localStorage.getItem('token'));
                 window.location.href = 'lk.html';
             } else {
                 // Ошибка авторизации
-                alert(data.message || 'Неверный email или пароль');
+                const message = data.message || 'Неверный email или пароль';
+                console.error("Ошибка авторизации:", message);
+                alert(message);
             }
         } catch (error) {
             console.error('Ошибка при авторизации:', error);
@@ -40,4 +45,3 @@ if (loginForm) {
         }
     });
 }
-</script>
