@@ -1,44 +1,43 @@
-// Этот код обрабатывает отправку формы входа.
-document.addEventListener('DOMContentLoaded', function() {
-    const loginForm = document.getElementById('loginForm');
-    
-    // Проверяем, что форма существует на странице.
-    if (loginForm) {
-        loginForm.addEventListener('submit', async function(event) {
-            event.preventDefault(); // Останавливаем стандартную отправку формы.
+<script>
+// Код для обработки формы входа
+const loginForm = document.getElementById('loginForm');
+if (loginForm) {
+    loginForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
 
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value.trim();
 
-            // URL вашей Netlify функции для авторизации
-            const authUrl = '/.netlify/functions/auth';
+        const authUrl = '/.netlify/functions/auth';
 
+        try {
+            const response = await fetch(authUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+
+            let data = {};
             try {
-                const response = await fetch(authUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    // КЛЮЧЕВАЯ СТРОКА: Правильно формируем тело запроса в формате JSON.
-                    body: JSON.stringify({ email, password }),
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    // Если авторизация успешна, сохраняем токен и перенаправляем.
-                    localStorage.setItem('token', data.token);
-                    window.location.href = 'lk.html';
-                } else {
-                    // Если ошибка, показываем сообщение от сервера.
-                    alert(data.message || 'Неверный email или пароль');
-                }
-            } catch (error) {
-                console.error('Ошибка при авторизации:', error);
-                alert('Произошла ошибка при попытке входа. Пожалуйста, попробуйте позже.');
+                data = await response.json();
+            } catch {
+                data = {};
             }
-        });
-    } else {
-        console.error('Элемент формы входа не найден.');
-    }
-});
+
+            if (response.ok && data.token) {
+                // Авторизация успешна — сохраняем токен
+                localStorage.setItem('token', data.token);
+                window.location.href = 'lk.html';
+            } else {
+                // Ошибка авторизации
+                alert(data.message || 'Неверный email или пароль');
+            }
+        } catch (error) {
+            console.error('Ошибка при авторизации:', error);
+            alert('Произошла ошибка при попытке входа. Пожалуйста, попробуйте позже.');
+        }
+    });
+}
+</script>
