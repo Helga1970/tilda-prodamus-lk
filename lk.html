@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Личный кабинет | Pro-Culinaria</title>
     <style>
-        /* Весь ваш CSS-код без изменений */
         @import url('https://fonts.googleapis.com/css2?family=Circe+Rounded:wght@400;700&display=swap');
 
         body {
@@ -134,10 +133,9 @@
     </div>
 
     <script>
-        // Проверяем авторизацию при загрузке страницы
+        // Проверяем наличие JWT-токена при загрузке
         window.onload = function() {
             try {
-                // Вместо 'user' теперь проверяем наличие токена
                 const token = localStorage.getItem('token');
                 if (!token) {
                     window.location.href = 'https://pro-culinaria-lk.proculinaria-book.ru';
@@ -152,13 +150,13 @@
             equalizeTiles();
         };
 
-        // Логика выхода осталась прежней, но теперь удаляется 'token'
+        // Выход из кабинета
         document.getElementById('logoutButton').addEventListener('click', function() {
             localStorage.removeItem('token');
             window.location.href = 'https://pro-culinaria-lk.proculinaria-book.ru';
         });
         
-        // Новая логика для проверки доступа с использованием токена
+        // Проверка доступа с использованием токена
         const checkAndRedirect = async () => {
             const token = localStorage.getItem('token');
             
@@ -169,11 +167,10 @@
             }
 
             try {
-                // Отправляем POST-запрос с токеном в заголовке
                 const response = await fetch('/.netlify/functions/get-content', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`, // Это ключевое изменение
+                        'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ action: 'check-access' })
@@ -182,19 +179,14 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Сервер ответил 200, теперь проверяем статус доступа в теле ответа
                     if (data.status === 'access_granted') {
-                        // Если доступ разрешен, перенаправляем пользователя
                         window.location.href = 'https://pro-culinaria-library.proculinaria-book.ru';
                     } else if (data.status === 'access_denied') {
-                        // Если доступ запрещен, показываем сообщение
-                        alert('У вас нет действующей подписки. ' + data.message);
+                        alert('У вас нет действующей подписки. ' + (data.message || ''));
                     }
                 } else {
-                    // Если статус ответа не 200 (например, 401 Unauthorized)
                     alert(data.message || 'Ошибка сервера.');
                     if (response.status === 401) {
-                        // Если токен недействителен, удаляем его и перенаправляем на вход
                         localStorage.removeItem('token');
                         window.location.href = 'https://pro-culinaria-lk.proculinaria-book.ru';
                     }
@@ -206,7 +198,7 @@
             }
         };
 
-        // Оставшийся код для выравнивания плиток и обработки изменения размера окна
+        // Выравнивание плиток
         function equalizeTiles() {
             const tiles = Array.from(document.querySelectorAll('.links-section .lk-link'));
             if (!tiles.length) return;
