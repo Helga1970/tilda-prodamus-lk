@@ -1,5 +1,3 @@
-// netlify/functions/auth.js
-
 const { Client } = require('pg');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -11,6 +9,11 @@ exports.handler = async (event) => {
     } catch (e) {
         return {
             statusCode: 400,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+            },
             body: JSON.stringify({ message: "Invalid request format." }),
         };
     }
@@ -20,6 +23,11 @@ exports.handler = async (event) => {
     if (!email || !password) {
         return {
             statusCode: 400,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+            },
             body: JSON.stringify({ message: "Email or password not provided." }),
         };
     }
@@ -38,6 +46,11 @@ exports.handler = async (event) => {
         if (res.rows.length === 0) {
             return {
                 statusCode: 401,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+                },
                 body: JSON.stringify({ message: "Invalid email or password." }),
             };
         }
@@ -48,16 +61,25 @@ exports.handler = async (event) => {
         if (!passwordIsValid) {
             return {
                 statusCode: 401,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+                },
                 body: JSON.stringify({ message: "Invalid email or password." }),
             };
         }
 
-        // If the password is valid, create a JWT token.
+        // JWT токен
         const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         return {
             statusCode: 200,
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+            },
             body: JSON.stringify({ token: token, message: "Login successful." }),
         };
 
@@ -65,6 +87,11 @@ exports.handler = async (event) => {
         console.error('Database or authorization error:', err.message);
         return {
             statusCode: 500,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+            },
             body: JSON.stringify({ message: "Server error: " + err.message }),
         };
     } finally {
