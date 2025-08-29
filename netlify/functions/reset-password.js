@@ -10,14 +10,24 @@ exports.handler = async (event) => {
     };
 
     if (event.httpMethod === 'OPTIONS') {
-        return { statusCode: 204, headers, body: '' };
+        return {
+            statusCode: 204,
+            headers: headers,
+            body: ''
+        };
     }
 
     if (event.httpMethod !== 'POST' || !event.body) {
-        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid request' }) };
+        return {
+            statusCode: 400,
+            headers: headers,
+            body: JSON.stringify({ error: 'Invalid request' })
+        };
     }
 
-    const client = new Client({ connectionString: process.env.NEON_DB_URL });
+    const client = new Client({
+        connectionString: process.env.NEON_DB_URL,
+    });
 
     try {
         await client.connect();
@@ -25,24 +35,30 @@ exports.handler = async (event) => {
         let payload;
         try {
             payload = JSON.parse(event.body);
-        } catch {
-            try {
-                const params = new URLSearchParams(event.body);
-                payload = Object.fromEntries(params.entries());
-            } catch {
-                return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid request body' }) };
-            }
+        } catch (e) {
+            const params = new URLSearchParams(event.body);
+            payload = Object.fromEntries(params.entries());
         }
 
         const { email } = payload;
+
         if (!email) {
-            return { statusCode: 400, headers, body: JSON.stringify({ error: 'E-mail is required' }) };
+            return {
+                statusCode: 400,
+                headers: headers,
+                body: JSON.stringify({ error: 'E-mail is required' })
+            };
         }
 
         const userQuery = 'SELECT * FROM users WHERE email = $1';
         const userResult = await client.query(userQuery, [email]);
+
         if (userResult.rows.length === 0) {
-            return { statusCode: 404, headers, body: JSON.stringify({ error: 'Пользователь с таким e-mail не найден.' }) };
+            return {
+                statusCode: 404,
+                headers: headers,
+                body: JSON.stringify({ error: 'Пользователь с таким e-mail не найден.' })
+            };
         }
 
         const newPassword = crypto.randomBytes(8).toString('hex');
@@ -54,7 +70,10 @@ exports.handler = async (event) => {
             host: 'in-v3.mailjet.com',
             port: 465,
             secure: true,
-            auth: { user: process.env.MAILJET_API_KEY, pass: process.env.MAILJET_SECRET_KEY }
+            auth: {
+                user: process.env.MAILJET_API_KEY,
+                pass: process.env.MAILJET_SECRET_KEY
+            }
         });
 
         const mailOptions = {
@@ -70,15 +89,24 @@ exports.handler = async (event) => {
             `,
         };
 
-        try { await transporter.sendMail(mailOptions); } 
-        catch (emailError) { console.error('Error sending email:', emailError); }
+        await transporter.sendMail(mailOptions);
 
-        return { statusCode: 200, headers, body: JSON.stringify({ message: 'Новый пароль отправлен на вашу почту.' }) };
+        return {
+            statusCode: 200,
+            headers: headers,
+            body: JSON.stringify({ message: 'Новый пароль отправлен на вашу почту.' })
+        };
 
     } catch (error) {
         console.error('Ошибка при восстановлении пароля:', error);
-        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Произошла ошибка сервера при восстановлении пароля.' }) };
+        return {
+            statusCode: 500,
+            headers: headers,
+            body: JSON.stringify({ error: 'Произошла ошибка сервера при восстановлении пароля.' })
+        };
     } finally {
-        await client.end();
+        if (client) {
+            await client.end();
+        }
     }
 };
