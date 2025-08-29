@@ -1,18 +1,150 @@
-<script>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет | Pro-Culinaria</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Circe+Rounded:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Circe Rounded', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: url('a7f3dec3-aa46-42ce-a500-d40abb995b63.png');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: #333;
+        }
+
+        .lk-container {
+            background-color: rgba(255, 255, 255, 0.85);
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+            box-sizing: border-box;
+            border-radius: 0;
+        }
+
+        h1 {
+            color: #fb4d35;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        .links-section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 30px;
+        }
+
+        .lk-link {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px 18px;
+            min-height: 50px;
+            background-color: #fb4d35;
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 700;
+            transition: background-color 0.3s ease;
+            border-radius: 0;
+            text-align: center;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .lk-link:hover {
+            background-color: #e5462e;
+        }
+
+        .lk-link .lk-subtext {
+            display: block;
+            font-size: 11px;
+            font-weight: 400;
+            color: #ffffff;
+            margin-top: 6px;
+            line-height: 1.1;
+            text-align: center;
+            opacity: 0.95;
+        }
+
+        .logout-button {
+            margin-top: 40px;
+            background: none;
+            border: none;
+            color: #fb4d35;
+            font-family: 'Circe Rounded', sans-serif;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        
+        .logout-button:hover {
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .lk-container {
+                padding: 20px;
+                width: 95%;
+            }
+            h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            .lk-link {
+                font-size: 15px;
+                padding: 9px 14px;
+            }
+            .lk-link .lk-subtext {
+                font-size: 10px;
+                margin-top: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="lk-container">
+        <h1>Добро пожаловать в Личный кабинет!</h1>
+        
+        <div class="links-section">
+            <a href="https://for-dating.proculinaria-book.ru/" class="lk-link">Ознакомительный раздел</a>
+
+            <a href="#" class="lk-link" onclick="checkAndRedirect(); return false;">
+                <span>Читальный зал Библиотеки</span>
+                <span class="lk-subtext">для доступа требуется действующая подписка</span>
+            </a>
+        </div>
+        
+        <button class="logout-button" id="logoutButton">Выйти из кабинета</button>
+    </div>
+
+    <script>
         // Проверяем авторизацию при загрузке страницы
         window.onload = function() {
             try {
                 const token = localStorage.getItem('token');
                 if (!token) {
-                    // ИСПРАВЛЕНО: перенаправляем на главную страницу входа
-                    window.location.href = 'index.html'; 
+                    window.location.href = 'https://pro-culinaria-lk.proculinaria-book.ru';
                     return;
                 }
             } catch (e) {
                 console.error('Ошибка при чтении токена из localStorage:', e);
                 localStorage.removeItem('token');
-                // ИСПРАВЛЕНО: перенаправляем на главную страницу входа
-                window.location.href = 'index.html';
+                window.location.href = 'https://pro-culinaria-lk.proculinaria-book.ru';
                 return;
             }
             equalizeTiles();
@@ -20,55 +152,18 @@
 
         document.getElementById('logoutButton').addEventListener('click', function() {
             localStorage.removeItem('token');
-            // ИСПРАВЛЕНО: перенаправляем на главную страницу входа
-            window.location.href = 'index.html'; 
+            window.location.href = 'https://pro-culinaria-lk.proculinaria-book.ru';
         });
-        
+        
         const checkAndRedirect = async () => {
             const token = localStorage.getItem('token');
-            
+            
             if (!token) {
                 alert('Ошибка: токен не найден. Пожалуйста, попробуйте войти снова.');
-                window.location.href = 'index.html'; // ИСПРАВЛЕНО: перенаправляем на главную страницу входа
+                window.location.href = 'https://pro-culinaria-lk.proculinaria-book.ru';
                 return;
             }
 
             try {
-                const response = await fetch('/.netlify/functions/get-content?action=check-access', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (response.ok) {
-                    window.location.href = 'https://pro-culinaria-library.proculinaria-book.ru/?access=true';
-                } else {
-                    const errorData = await response.json();
-                    alert(`Ошибка: ${errorData.message || 'Ошибка доступа'}`);
-                }
-
-            } catch (e) {
-                console.error('Ошибка:', e);
-                alert('Произошла ошибка при получении доступа к материалам. Пожалуйста, попробуйте позже.');
-            }
-        };
-
-        function equalizeTiles() {
-            const tiles = Array.from(document.querySelectorAll('.links-section .lk-link'));
-            if (!tiles.length) return;
-            tiles.forEach(t => t.style.height = 'auto');
-            let max = 0;
-            tiles.forEach(t => {
-                const h = t.offsetHeight;
-                if (h > max) max = h;
-            });
-            if (max < 50) max = 50;
-            tiles.forEach(t => t.style.height = max + 'px');
-        }
-
-        let _resizeTimer;
-        window.addEventListener('resize', function() {
-            clearTimeout(_resizeTimer);
-            _resizeTimer = setTimeout(equalizeTiles, 120);
-        });
-
-        document.fonts && document.fonts.ready.then(equalizeTiles).catch(()=>{});
-    </script>
+                // ИСПРАВЛЕНО: Правильный путь к функции Netlify
+                const response = await fetch('/.netlify/functions/prodamus-webhook', {
