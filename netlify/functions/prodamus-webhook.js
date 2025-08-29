@@ -9,6 +9,10 @@ const handleProdamusWebhook = async (client, payload) => {
     if (payload.payment_status !== 'success') {
         return {
             statusCode: 200,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+            },
             body: JSON.stringify({ message: "Payment was not successful." }),
         };
     }
@@ -17,6 +21,7 @@ const handleProdamusWebhook = async (client, payload) => {
     if (!customerEmail) {
         return {
             statusCode: 400,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
             body: JSON.stringify({ message: "Missing customer email." }),
         };
     }
@@ -32,6 +37,7 @@ const handleProdamusWebhook = async (client, payload) => {
     } else {
         return {
             statusCode: 200,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
             body: JSON.stringify({ message: "Unknown payment amount." }),
         };
     }
@@ -51,14 +57,14 @@ const handleProdamusWebhook = async (client, payload) => {
         const updateValues = [subscriptionType, newEndDate.toISOString(), customerEmail];
         await client.query(updateQuery, updateValues);
     } else {
-        // Здесь мы шифруем пароль перед сохранением в базу данных
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
         const accessEndDate = new Date();
         accessEndDate.setDate(accessEndDate.getDate() + accessDays);
-        const insertQuery = 'INSERT INTO users (email, password, name, subscription_type, access_end_date) VALUES ($1, $2, $3, $4, $5) RETURNING *';
+        const insertQuery = 'INSERT INTO users (email, password, name, subscription_type, access_end_date) VALUES ($1, $2, $3, $4, $5)';
         const insertValues = [customerEmail, hashedPassword, customerName, subscriptionType, accessEndDate.toISOString()];
         await client.query(insertQuery, insertValues);
+
         const transporter = nodemailer.createTransport({
             host: 'in-v3.mailjet.com',
             port: 587,
@@ -93,77 +99,53 @@ const handleProdamusWebhook = async (client, payload) => {
     }
     return {
         statusCode: 200,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
         body: JSON.stringify({ message: "Database and email updated successfully." }),
     };
 };
 
 exports.handler = async (event) => {
-    console.log('Incoming request event:', JSON.stringify(event, null, 2));
-
-    const client = new Client({
-        connectionString: process.env.NEON_DB_URL,
-    });
+    const client = new Client({ connectionString: process.env.NEON_DB_URL });
     try {
         await client.connect();
         let requestBody;
+
+        // Обрабатываем form-urlencoded
         if (event.headers['content-type'] && event.headers['content-type'].includes('application/x-www-form-urlencoded')) {
             const params = new URLSearchParams(event.body);
             requestBody = Object.fromEntries(params.entries());
-            if (requestBody.payment_status) {
-                return await handleProdamusWebhook(client, requestBody);
+            if (requestBody.payment_status) return await handleProdamusWebhook(client, requestBody);
+        } else {
+            try {
+                requestBody = JSON.parse(event.body);
+            } catch (e) {
+                const params = new URLSearchParams(event.body);
+                requestBody = Object.fromEntries(params.entries());
             }
-        }
-        try {
-            requestBody = JSON.parse(event.body);
-        } catch (e) {
-            const params = new URLSearchParams(event.body);
-            requestBody = Object.fromEntries(params.entries());
         }
 
         const { email, password } = requestBody;
-
         if (!email || !password) {
-            return {
-                statusCode: 400,
-                body: JSON.stringify({ message: "Отсутствуют email или пароль." }),
-            };
+            return { statusCode: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ message: "Отсутствуют email или пароль." }) };
         }
 
-        const query = 'SELECT * FROM users WHERE email = $1';
-        const values = [email];
-        const res = await client.query(query, values);
-        if (res.rows.length > 0) {
-            const user = res.rows[0];
-
-            const passwordIsValid = await bcrypt.compare(password, user.password);
-
-            if (passwordIsValid) {
-                const secret = process.env.JWT_SECRET;
-                const token = jwt.sign({ email: user.email }, secret, { expiresIn: '1h' });
-
-                return {
-                    statusCode: 200,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token: token, message: "Успешная авторизация" }),
-                };
-            } else {
-                return {
-                    statusCode: 401,
-                    body: JSON.stringify({ message: "Неверный email или пароль" }),
-                };
-            }
-        } else {
-            return {
-                statusCode: 401,
-                body: JSON.stringify({ message: "Неверный email или пароль" }),
-            };
+        const res = await client.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (res.rows.length === 0) {
+            return { statusCode: 401, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ message: "Неверный email или пароль" }) };
         }
+
+        const user = res.rows[0];
+        const passwordIsValid = await bcrypt.compare(password, user.password);
+        if (!passwordIsValid) {
+            return { statusCode: 401, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ message: "Неверный email или пароль" }) };
+        }
+
+        const token = jwt.sign({ email: user.email, id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        return { statusCode: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ token, message: "Успешная авторизация" }) };
+
     } catch (err) {
         console.error('Ошибка при авторизации:', err.message);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ message: "Ошибка сервера: " + err.message }),
-        };
+        return { statusCode: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ message: "Ошибка сервера: " + err.message }) };
     } finally {
         await client.end();
     }
