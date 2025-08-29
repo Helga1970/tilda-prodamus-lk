@@ -9,65 +9,55 @@ exports.handler = async (event) => {
     };
 
     if (event.httpMethod === 'OPTIONS') {
-        return {
-            statusCode: 204,
-            headers: headers,
-            body: ''
-        };
+        return { statusCode: 204, headers, body: '' };
     }
 
     if (event.httpMethod !== 'POST' || !event.body) {
-        return {
-            statusCode: 400,
-            headers: headers,
-            body: JSON.stringify({ error: 'Invalid request' })
-        };
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid request' }) };
     }
 
-    const client = new Client({
-        connectionString: process.env.NEON_DB_URL,
-    });
+    const client = new Client({ connectionString: process.env.NEON_DB_URL });
 
     try {
         await client.connect();
 
-        const { name, email, password } = JSON.parse(event.body);
+        let body;
+        try {
+            body = JSON.parse(event.body);
+        } catch {
+            return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON' }) };
+        }
+
+        const { name, email, password } = body;
 
         if (!name || !email || !password) {
             return {
                 statusCode: 400,
-                headers: headers,
+                headers,
                 body: JSON.stringify({ error: 'Name, e-mail, and password are required' })
             };
         }
 
-        // Проверка, существует ли пользователь
+        // Проверка существующего пользователя
         const userExistsQuery = 'SELECT COUNT(*) FROM users WHERE email = $1';
         const userExistsResult = await client.query(userExistsQuery, [email]);
-        if (userExistsResult.rows[0].count > 0) {
-            return {
-                statusCode: 409,
-                headers: headers,
-                body: JSON.stringify({ error: 'Пользователь с таким e-mail уже зарегистрирован' })
-            };
+        if (parseInt(userExistsResult.rows[0].count) > 0) {
+            return { statusCode: 409, headers, body: JSON.stringify({ error: 'Пользователь с таким e-mail уже зарегистрирован' }) };
         }
 
-        // Сохранение пароля в открытом виде
+        // Сохранение пароля в открытом виде (по твоему условию)
         const accessEndDate = new Date();
         accessEndDate.setDate(accessEndDate.getDate() - 1);
 
         const insertUserQuery = 'INSERT INTO users (name, email, password, access_end_date) VALUES ($1, $2, $3, $4) RETURNING id';
         await client.query(insertUserQuery, [name, email, password, accessEndDate.toISOString()]);
 
-        // Отправка письма пользователю
+        // Отправка письма
         const transporter = nodemailer.createTransport({
             host: 'in-v3.mailjet.com',
             port: 465,
             secure: true,
-            auth: {
-                user: process.env.MAILJET_API_KEY,
-                pass: process.env.MAILJET_SECRET_KEY
-            }
+            auth: { user: process.env.MAILJET_API_KEY, pass: process.env.MAILJET_SECRET_KEY }
         });
 
         const mailOptions = {
@@ -87,28 +77,15 @@ exports.handler = async (event) => {
             `,
         };
 
-        try {
-            await transporter.sendMail(mailOptions);
-        } catch (emailError) {
-            console.error('Error sending email:', emailError);
-        }
+        try { await transporter.sendMail(mailOptions); } 
+        catch (emailError) { console.error('Error sending email:', emailError); }
 
-        return {
-            statusCode: 200,
-            headers: headers,
-            body: JSON.stringify({ message: 'Регистрация прошла успешно! Проверьте свой e-mail для входа.' })
-        };
+        return { statusCode: 200, headers, body: JSON.stringify({ message: 'Регистрация прошла успешно! Проверьте свой e-mail для входа.' }) };
 
     } catch (error) {
         console.error('Ошибка при регистрации пользователя:', error);
-        return {
-            statusCode: 500,
-            headers: headers,
-            body: JSON.stringify({ error: 'Произошла ошибка сервера при регистрации' })
-        };
+        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Произошла ошибка сервера при регистрации' }) };
     } finally {
-        if (client) {
-            await client.end();
-        }
+        await client.end();
     }
 };
