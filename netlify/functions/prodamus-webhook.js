@@ -2,6 +2,7 @@ const { URLSearchParams } = require('url');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const { Client } = require('pg');
+const jwt = require('jsonwebtoken'); // <--- ДОБАВЛЕНО
 
 const handleProdamusWebhook = async (client, payload) => {
     if (payload.payment_status !== 'success') {
@@ -129,13 +130,22 @@ exports.handler = async (event) => {
         const values = [email, password];
         const res = await client.query(query, values);
         if (res.rows.length > 0) {
+            // <--- НАЧАЛО ДОБАВЛЕННОГО КОДА ---
+            const secret = process.env.JWT_SECRET;
+            const token = jwt.sign({ user: res.rows[0].email }, secret, { expiresIn: '1h' });
+
             return {
                 statusCode: 200,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Set-Cookie': `auth_token=${token}; Domain=.proculinaria-book.ru; Path=/; HttpOnly; SameSite=Strict; Max-Age=3600`
+                },
                 body: JSON.stringify({
                     message: "Успешная авторизация",
                     user: res.rows[0],
                 }),
             };
+            // <--- КОНЕЦ ДОБАВЛЕННОГО КОДА ---
         } else {
             return {
                 statusCode: 401,
